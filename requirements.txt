@@ -1,0 +1,12 @@
+pydantic>=2
+elevenlabs
+python-dotenv
+rapidfuzz
+httpx
+fastapi
+uvicorn
+python-multipart
+pytest
+# опционально:
+# faster-whisper     # локальный Whisper
+# anthropic          # LLM-fallback

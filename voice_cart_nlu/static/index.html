@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Голосовой заказ</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --line: #e4e2dc;
+    --accent: #c2410c; --accent-text: #ffffff; --ask: #fff4e5; --ask-line: #f5c27a;
+    --warn: #b42318; --pending: #8a6d1f; --ok: #1f7a3d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161615; --panel: #1f1f1d; --text: #ececea; --muted: #9b9b96; --line: #33332f;
+      --accent: #f97316; --accent-text: #1a1a1a; --ask: #2d2416; --ask-line: #7a5a26;
+      --warn: #f87171; --pending: #e3c46b; --ok: #6fcf8e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161615; --panel: #1f1f1d; --text: #ececea; --muted: #9b9b96; --line: #33332f;
+    --accent: #f97316; --accent-text: #1a1a1a; --ask: #2d2416; --ask-line: #7a5a26;
+    --warn: #f87171; --pending: #e3c46b; --ok: #6fcf8e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px;
+         display: grid; gap: 20px; grid-template-columns: 1fr; }
+  @media (min-width: 800px) { main { grid-template-columns: 1fr 1fr; align-items: start; } }
+  h1 { font-size: 22px; margin: 0 0 4px; grid-column: 1 / -1; }
+  .sub { color: var(--muted); margin: 0; font-size: 14px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  h2 { font-size: 15px; margin: 0 0 12px; color: var(--muted); font-weight: 600; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #mic { flex: 1 1 200px; min-height: 64px; border: 0; border-radius: 12px; cursor: pointer;
+         background: var(--accent); color: var(--accent-text); font-size: 17px; font-weight: 600; }
+  #mic.rec { animation: pulse 1.2s ease-in-out infinite; }
+  #mic:disabled { opacity: .55; cursor: wait; }
+  @keyframes pulse { 50% { opacity: .7; } }
+  select, input, button.plain { font: inherit; color: var(--text); background: var(--panel);
+         border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  button.plain { cursor: pointer; }
+  form { display: flex; gap: 8px; margin-top: 12px; }
+  form input { flex: 1; min-width: 0; }
+  .heard { margin: 16px 0 0; color: var(--muted); font-size: 14px; min-height: 1.4em; }
+  .heard b { color: var(--text); font-weight: 500; }
+  .ask { margin-top: 12px; padding: 12px 14px; background: var(--ask); border: 1px solid var(--ask-line);
+         border-radius: 10px; font-weight: 600; }
+  .notes { margin: 10px 0 0; padding: 0; list-style: none; color: var(--warn); font-size: 14px; }
+  .notes li + li { margin-top: 4px; }
+  details { margin-top: 14px; font-size: 13px; color: var(--muted); }
+  pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; margin: 8px 0 0; }
+  .cart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.confirmed { color: var(--ok); border-color: currentColor; }
+  ul.lines { list-style: none; margin: 0; padding: 0; }
+  ul.lines li { display: grid; grid-template-columns: 28px 1fr auto; gap: 4px 10px; padding: 12px 0;
+                border-bottom: 1px solid var(--line); }
+  .qty { font-variant-numeric: tabular-nums; color: var(--muted); }
+  .name { font-weight: 600; }
+  .detail { grid-column: 2 / 4; color: var(--muted); font-size: 14px; }
+  .price { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  li.pending .name, li.pending .price { color: var(--pending); }
+  .total { display: flex; justify-content: space-between; padding-top: 14px; font-size: 18px; font-weight: 700; }
+  .empty { color: var(--muted); padding: 8px 0 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div style="grid-column: 1 / -1">
+    <h1>Голосовой заказ</h1>
+    <p class="sub">Нажмите на микрофон, скажите заказ, нажмите ещё раз. Можно менять заказ по ходу разговора.</p>
+  </div>
+
+  <section aria-label="Разговор">
+    <h2>Говорите</h2>
+    <div class="controls">
+      <button id="mic" type="button">🎤 Нажмите и говорите</button>
+      <select id="lang" aria-label="Язык">
+        <option value="">Авто</option>
+        <option value="ru">Русский</option>
+        <option value="kk">Қазақша</option>
+      </select>
+    </div>
+    <form id="textForm">
+      <input id="text" placeholder="или напишите: «два комбо с колой»" autocomplete="off">
+      <button class="plain" type="submit">Отправить</button>
+    </form>
+    <p class="heard" id="heard"></p>
+    <div class="ask" id="ask" hidden></div>
+    <ul class="notes" id="notes"></ul>
+    <details>
+      <summary>Действия (JSON)</summary>
+      <pre id="actions">—</pre>
+    </details>
+  </section>
+
+  <section aria-label="Корзина">
+    <div class="cart-head">
+      <h2>Корзина</h2>
+      <span class="badge" id="status">открыта</span>
+    </div>
+    <ul class="lines" id="lines"></ul>
+    <div class="total"><span>Итого</span><span id="total">0 ₸</span></div>
+    <p style="margin:14px 0 0"><button class="plain" id="reset" type="button">Начать заново</button></p>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+// открыт как файл (file://) -> ходим на локальный сервер; иначе — на тот, что отдал страницу
+const API = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+const STATUS = { open: "открыта", confirmed: "подтверждена", cancelled: "очищена" };
+
+let sid = null;
+try { sid = localStorage.getItem("voice-cart-sid"); } catch (e) {}
+if (!sid) {
+  sid = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()).replace(/[^\w-]/g, "");
+  try { localStorage.setItem("voice-cart-sid", sid); } catch (e) {}
+}
+
+function money(cents) {
+  const sign = cents < 0 ? "−" : "", c = Math.abs(cents);
+  const whole = Math.floor(c / 100).toLocaleString("ru-RU");
+  return sign + whole + (c % 100 ? "," + String(c % 100).padStart(2, "0") : "") + " ₸";
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function renderCart(cart) {
+  const ul = $("lines");
+  ul.replaceChildren();
+  if (!cart.lines.length) ul.append(el("li", "empty", "Пока пусто"));
+  for (const l of cart.lines) {
+    const li = el("li", l.pending ? "pending" : "");
+    li.append(el("span", "qty", l.quantity + "×"));
+    li.append(el("span", "name", l.name + (l.size ? " (" + l.size + ")" : "")));
+    li.append(el("span", "price", l.pending ? "ждёт выбора" : money(l.line_total_cents)));
+    const parts = l.choices.map((c) => c.name + (c.price_delta_cents ? " (" + (c.price_delta_cents > 0 ? "+" : "") + money(c.price_delta_cents) + ")" : ""));
+    for (const m of l.modifiers)
+      parts.push(m.op === "add" ? "+ " + m.name.toLowerCase() + (m.price_cents ? " (" + money(m.price_cents) + ")" : "") : "без: " + m.name.toLowerCase());
+    if (l.pending) parts.push("нужно выбрать: " + l.missing.join(", "));
+    if (l.quantity > 1 && !l.pending) parts.push(money(l.unit_price_cents) + " за шт.");
+    if (parts.length) li.append(el("span", "detail", parts.join(" · ")));
+    ul.append(li);
+  }
+  $("total").textContent = money(cart.total_cents);
+  $("status").textContent = STATUS[cart.status] || cart.status;
+  $("status").className = "badge " + cart.status;
+}
+
+function renderReply(r) {
+  $("heard").replaceChildren("Услышано: ", el("b", "", "«" + r.transcript + "»"));
+  $("ask").hidden = !r.question;
+  $("ask").textContent = r.question || "";
+  $("notes").replaceChildren(...r.notes.map((n) => el("li", "", n)));
+  $("actions").textContent = JSON.stringify(r.actions, null, 2);
+  renderCart(r.cart);
+}
+
+function showError(msg) {
+  $("notes").replaceChildren(el("li", "", msg));
+}
+
+async function send(url, opts) {
+  try {
+    const res = await fetch(url, opts);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return showError(body.detail || "Ошибка сервера: " + res.status);
+    renderReply(body);
+  } catch (e) {
+    showError("Нет связи с сервером");
+  }
+}
+
+$("textForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = $("text").value.trim();
+  if (!text) return;
+  $("text").value = "";
+  send(`${API}/cart/${sid}/text`, { method: "POST", headers: { "Content-Type": "application/json" },
+                             body: JSON.stringify({ text }) });
+});
+
+let rec = null, chunks = [];
+const MIC_IDLE = "🎤 Нажмите и говорите", MIC_REC = "⏹ Нажмите, чтобы отправить";
+
+$("mic").addEventListener("click", async () => {
+  if (rec && rec.state === "recording") { rec.stop(); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { return showError("Нет доступа к микрофону"); }
+  const type = ["audio/webm", "audio/mp4", "audio/ogg"].find((t) => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+  rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+  chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  rec.onstop = async () => {
+    stream.getTracks().forEach((t) => t.stop());
+    $("mic").classList.remove("rec");
+    $("mic").textContent = "Распознаю…";
+    $("mic").disabled = true;
+    const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+    const ext = (blob.type.split("/")[1] || "webm").split(";")[0];
+    const fd = new FormData();
+    fd.append("audio", blob, "speech." + ext);
+    if ($("lang").value) fd.append("lang", $("lang").value);
+    await send(`${API}/cart/${sid}/voice`, { method: "POST", body: fd });
+    $("mic").disabled = false;
+    $("mic").textContent = MIC_IDLE;
+  };
+  rec.start();
+  $("mic").classList.add("rec");
+  $("mic").textContent = MIC_REC;
+});
+
+$("reset").addEventListener("click", async () => {
+  await fetch(`${API}/cart/${sid}`, { method: "DELETE" }).catch(() => {});
+  $("heard").textContent = ""; $("ask").hidden = true; $("notes").replaceChildren();
+  $("actions").textContent = "—";
+  renderCart({ lines: [], status: "open", total_cents: 0 });
+});
+
+fetch(`${API}/cart/${sid}`).then((r) => r.json()).then(renderCart).catch(() => renderCart({ lines: [], status: "open", total_cents: 0 }));
+</script>
+</body>
+</html>
