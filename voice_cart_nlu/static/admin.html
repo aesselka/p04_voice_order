@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Админка киоска</title>
+<style>
+  :root { --bg: #f6f6f4; --card: #fff; --text: #1d1d1b; --muted: #77776f; --line: #e3e3de; --accent: #d62300; --ok: #1f7a3a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  main { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 0 0 4px; }
+  p.hint { color: var(--muted); margin: 0 0 14px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-top: 18px; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+  th { font-weight: 600; color: var(--muted); font-size: 13px; }
+  .rules td:last-child { white-space: nowrap; }
+  select, input[type=text], input[type=password] { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: #fff; }
+  button { font: inherit; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.icon { padding: 4px 9px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .status { min-height: 20px; margin-top: 8px; font-size: 14px; }
+  .status.ok { color: var(--ok); } .status.err { color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 16px; }
+  .grid label { display: flex; gap: 8px; align-items: center; padding: 4px 0; }
+  .cat { grid-column: 1 / -1; font-weight: 600; margin-top: 8px; color: var(--muted); font-size: 13px; text-transform: uppercase; }
+  .off { color: var(--muted); text-decoration: line-through; }
+  @media (max-width: 640px) { .rules td:nth-child(4) { min-width: 140px; } .rules { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Админка киоска</h1>
+  <p class="hint">Что допродавать и чего нет в наличии. Изменения применяются сразу, перезапуск не нужен.</p>
+
+  <section>
+    <h2>Допродажа (upsell)</h2>
+    <p class="hint">Если в корзине есть блюдо или категория из «Когда» и нет блюда из «Что предложить» — киоск один раз предложит его.
+      Правила проверяются сверху вниз, срабатывает первое подходящее.</p>
+    <table class="rules">
+      <thead><tr><th>#</th><th>Когда в корзине</th><th>Что предложить</th><th>Фраза (можно пусто)</th><th></th></tr></thead>
+      <tbody id="rules"></tbody>
+    </table>
+    <div class="row">
+      <button id="add-rule">+ Правило</button>
+      <button class="primary" id="save-rules">Сохранить правила</button>
+    </div>
+    <div class="status" id="rules-status"></div>
+  </section>
+
+  <section>
+    <h2>Стоп-лист</h2>
+    <p class="hint">Снимите галочку — блюдо закончилось. Киоск скажет гостю «нет в наличии» и не даст его заказать.</p>
+    <div class="grid" id="stock"></div>
+    <div class="row"><button class="primary" id="save-stock">Сохранить наличие</button></div>
+    <div class="status" id="stock-status"></div>
+  </section>
+
+  <section>
+    <h2>Доступ</h2>
+    <p class="hint">Нужен, только если на сервере задан ADMIN_TOKEN.</p>
+    <input type="password" id="token" placeholder="Токен администратора" autocomplete="off">
+  </section>
+</main>
+
+<script>
+const CATEGORY_NAMES = { burger: "Бургеры", combo: "Комбо", side: "Закуски", sauce: "Соусы", drink: "Напитки", dessert: "Десерты" };
+let menu = { items: [] };
+let rules = [];
+let stopped = new Set();
+
+const $ = (id) => document.getElementById(id);
+const tokenInput = $("token");
+try { tokenInput.value = localStorage.getItem("admin-token") || ""; } catch (e) {}
+tokenInput.addEventListener("change", () => { try { localStorage.setItem("admin-token", tokenInput.value); } catch (e) {} });
+
+async function api(path, options = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (tokenInput.value) headers["X-Admin-Token"] = tokenInput.value;
+  const r = await fetch(path, { ...options, headers });
+  const body = await r.json().catch(() => null);
+  if (!r.ok) {
+    const detail = body && body.detail;
+    throw new Error(Array.isArray(detail) ? detail.map((d) => d.msg || d).join("; ") : detail || `Ошибка ${r.status}`);
+  }
+  return body;
+}
+
+function showStatus(id, text, ok) {
+  const el = $(id);
+  el.textContent = text;
+  el.className = "status " + (ok ? "ok" : "err");
+}
+
+function option(value, label, selected) {
+  const o = document.createElement("option");
+  o.value = value; o.textContent = label; o.selected = value === selected;
+  return o;
+}
+
+function triggerSelect(value) {
+  const s = document.createElement("select");
+  const cats = document.createElement("optgroup"); cats.label = "Категория";
+  Object.entries(CATEGORY_NAMES).forEach(([id, name]) => cats.append(option(id, "Любое: " + name, value)));
+  const items = document.createElement("optgroup"); items.label = "Блюдо";
+  menu.items.forEach((i) => items.append(option(i.id, i.name, value)));
+  s.append(cats, items);
+  return s;
+}
+
+function offerSelect(value) {
+  const s = document.createElement("select");
+  menu.items.forEach((i) => s.append(option(i.id, `${i.name} — ${Math.round(i.price_cents / 100)} ₸`, value)));
+  return s;
+}
+
+function renderRules() {
+  const body = $("rules");
+  body.innerHTML = "";
+  rules.forEach((r, n) => {
+    const tr = document.createElement("tr");
+    const trigger = triggerSelect(r.trigger);
+    const offer = offerSelect(r.offer);
+    const text = document.createElement("input");
+    text.type = "text"; text.value = r.text || ""; text.placeholder = "Добавить … ?"; text.maxLength = 200;
+    trigger.onchange = () => { r.trigger = trigger.value; };
+    offer.onchange = () => { r.offer = offer.value; };
+    text.oninput = () => { r.text = text.value || null; };
+
+    const up = document.createElement("button"); up.className = "icon"; up.textContent = "↑"; up.title = "Выше";
+    up.onclick = () => { if (n > 0) { [rules[n - 1], rules[n]] = [rules[n], rules[n - 1]]; renderRules(); } };
+    const del = document.createElement("button"); del.className = "icon"; del.textContent = "✕"; del.title = "Удалить";
+    del.onclick = () => { rules.splice(n, 1); renderRules(); };
+
+    [n + 1, trigger, offer, text].forEach((c) => { const td = document.createElement("td"); td.append(c); tr.append(td); });
+    const actions = document.createElement("td"); actions.append(up, " ", del); tr.append(actions);
+    body.append(tr);
+  });
+}
+
+function renderStock() {
+  const grid = $("stock");
+  grid.innerHTML = "";
+  Object.entries(CATEGORY_NAMES).forEach(([cat, name]) => {
+    const items = menu.items.filter((i) => i.category === cat);
+    if (!items.length) return;
+    const h = document.createElement("div"); h.className = "cat"; h.textContent = name; grid.append(h);
+    items.forEach((i) => {
+      const label = document.createElement("label");
+      const box = document.createElement("input");
+      box.type = "checkbox"; box.checked = !stopped.has(i.id);
+      const text = document.createElement("span"); text.textContent = i.name;
+      text.className = box.checked ? "" : "off";
+      box.onchange = () => {
+        if (box.checked) stopped.delete(i.id); else stopped.add(i.id);
+        text.className = box.checked ? "" : "off";
+      };
+      label.append(box, text);
+      grid.append(label);
+    });
+  });
+}
+
+$("add-rule").onclick = () => {
+  rules.push({ trigger: "burger", offer: menu.items[0].id, text: null });
+  renderRules();
+};
+
+$("save-rules").onclick = async () => {
+  try {
+    rules = await api("/admin/upsell", { method: "PUT", body: JSON.stringify(rules) });
+    renderRules();
+    showStatus("rules-status", "Сохранено", true);
+  } catch (e) { showStatus("rules-status", e.message, false); }
+};
+
+$("save-stock").onclick = async () => {
+  try {
+    await api("/admin/stop-list", { method: "PUT", body: JSON.stringify({ item_ids: [...stopped] }) });
+    showStatus("stock-status", stopped.size ? `Сохранено, в стоп-листе: ${stopped.size}` : "Сохранено, всё в наличии", true);
+  } catch (e) { showStatus("stock-status", e.message, false); }
+};
+
+(async () => {
+  try {
+    [menu, rules] = await Promise.all([api("/menu"), api("/admin/upsell")]);
+    stopped = new Set((await api("/admin/stop-list")).item_ids);
+    renderRules();
+    renderStock();
+  } catch (e) { showStatus("rules-status", "Не удалось загрузить: " + e.message, false); }
+})();
+</script>
+</body>
+</html>

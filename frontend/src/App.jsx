@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getMenu, sendMessage, sendVoice, sendActions, resetSession, actionsMode, MODE, STT_MODE } from './api.js'
 import { useSpeech } from './useSpeech.js'
-import { UI } from './i18n.js'
+import { LANGS, UI } from './i18n.js'
 import { catEmoji } from './kioskData.js'
 import ProductCard from './components/ProductCard.jsx'
 import OrderPanel from './components/OrderPanel.jsx'
@@ -46,7 +46,7 @@ export default function App() {
   const orderNo = useMemo(() => sessionId.replace(/-/g, '').slice(0, 6).toUpperCase(), [sessionId])
 
   useEffect(() => {
-    getMenu().then(setMenu).catch((e) => setLast({ reply: 'Ошибка загрузки меню: ' + e.message }))
+    getMenu().then(setMenu).catch((e) => setLast({ reply: `${UI[lang].menuError}: ${e.message}` }))
   }, [])
 
   // ---------- общий приём ответа: голос, текст и тапы попадают в одну корзину ----------
@@ -82,7 +82,7 @@ export default function App() {
     }
     if (res.lang && res.lang !== lang && kind !== 'tap') setLang(res.lang)
   }
-  const fail = (e) => setLast({ reply: 'Ошибка: ' + e.message })
+  const fail = (e) => setLast({ reply: e.noBackend ? ui.noBackend : `${ui.error}: ${e.message}` })
 
   // не блокируем экран: каждый запрос встаёт в очередь, порядок фраз и тапов сохраняется
   function run(fn, text, kind) {
@@ -141,7 +141,7 @@ export default function App() {
   }, [resetIn])
 
   // ---------- ручные действия ----------
-  const nameOf = (item) => (lang === 'kz' ? item.name_kz : item.name_ru)
+  const nameOf = (item) => item[`name_${lang}`] || item.name_ru
   const ordText = (pos) => (lang === 'kz' ? `${ORD_KZ[pos - 1] || pos + ' позицияны'} алып таста` : `убери ${ORD_RU[pos - 1] || 'позицию ' + pos}`)
 
   function addItem(item, size) {
@@ -161,6 +161,7 @@ export default function App() {
       : remove(l)
   const remove = (l) => act([{ type: 'remove_item', target: { ordinal: l.position } }], ordText(l.position), `✕ ${l.name}`)
   const onQuick = (q) => (q.action ? act([q.action], q.text, q.label) : send(q.text))
+  // запасной текст для nlu всегда ru/kk
   const confirm = () => act([{ type: 'confirm' }], lang === 'kz' ? 'растаймын' : 'подтверждаю', ui.confirm)
   const clear = () => act([{ type: 'clear_cart' }], lang === 'kz' ? 'тапсырысты болдырма' : 'отмени заказ', ui.clear)
 
@@ -184,9 +185,10 @@ export default function App() {
 
   // демо для защиты: сценарий из задания прогоняется через бэк, метрики заполняются вживую
   const DEMO = {
-    ru: ['два бургера и колу', 'колу сделай большой', 'комбо', 'спрайт', 'картофель фри', 'большой', 'убери первое', 'подтверждаю'],
-    kz: ['екі бургер және кола', 'үлкен қыл', 'комбо', 'спрайт', 'фри', 'үлкен', 'біріншісін алып таста', 'растаймын'],
+    ru: ['два чизбургера и колу', 'колу сделай большой', 'комбо наггетс', 'спрайт', 'картофель фри', 'убери первое', 'подтверждаю'],
+    kz: ['екі чизбургер және кола', 'үлкен қыл', 'комбо наггетс', 'спрайт', 'фри', 'біріншісін алып таста', 'растаймын'],
   }
+  DEMO.en = DEMO.ru // nlu понимает ru/kk
   async function runDemo() {
     if (demo) return
     setDemo(true)
@@ -241,8 +243,9 @@ export default function App() {
             <input value={query} onChange={(e) => { setQuery(e.target.value); setView('kiosk') }} placeholder={ui.search} />
           </label>
           <div className="seg">
-            <button className={lang === 'ru' ? 'on' : ''} onClick={() => setLang('ru')}>RU</button>
-            <button className={lang === 'kz' ? 'on' : ''} onClick={() => setLang('kz')}>KZ</button>
+            {LANGS.map((l) => (
+              <button key={l.id} className={lang === l.id ? 'on' : ''} onClick={() => setLang(l.id)}>{l.short}</button>
+            ))}
           </div>
           <button className="kicon" title={ui.newOrder} onClick={newOrder}><IcRefresh size={18} /></button>
         </header>

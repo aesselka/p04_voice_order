@@ -7,9 +7,9 @@ import { IcCart } from './Icons.jsx'
 export default function ProductCard({ item, lang, ui, inCart, flash, busy, onAdd }) {
   const sizes = item.sizes ? Object.keys(item.sizes) : null
   const [size, setSize] = useState(sizes ? (sizes.includes('M') ? 'M' : sizes[0]) : null)
-  const name = lang === 'kz' ? item.name_kz : item.name_ru
+  const name = item[`name_${lang}`] || item.name_ru
   const price = sizes ? item.sizes[size] : item.price
-  const desc = item.desc?.[lang] || (item.modifiers.length ? item.modifiers.map((m) => (lang === 'kz' ? m.name_kz : m.name_ru)).slice(0, 3).join(', ') : '')
+  const desc = item.desc?.[lang] || (item.modifiers.length ? item.modifiers.map((m) => m[`name_${lang}`] || m.name_ru).slice(0, 3).join(', ') : '')
 
   return (
     <article className={'pcard' + (item.available ? '' : ' off') + (flash ? ' flash' : '') + (inCart ? ' has' : '')}>

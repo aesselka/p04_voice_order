@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from typing import Literal, Optional
 
@@ -14,11 +15,14 @@ from pydantic import BaseModel, Field
 
 from .actions import Action, to_actions
 from .menu import ComboChoice, Menu, MenuItem
-from .schemas import CartContext, CartLineView, Command, LineRef, ModifierOp, Size
+from .schemas import CartContext, CartLineView, Command, Intent, LineRef, ModifierOp, Size
+from .upsell import UpsellRule, UpsellView, pick_offer
 
 SIZE_LABEL = {"S": "маленький", "M": "средний", "L": "большой"}
 _MUTATING = {"add_item", "remove_item", "change_quantity", "change_size",
              "add_modifier", "remove_modifier", "set_combo_choice"}
+# ответ "нет" на допродажу
+_NO_RE = re.compile(r"^(нет|не надо|не нужно|не хочу|нет спасибо|спасибо нет|не|жоқ|керек емес|рахмет жоқ)[.!]?$")
 
 
 class CartLine(BaseModel):
@@ -71,6 +75,7 @@ class Reply(BaseModel):
     notes: list[str]                            # отказы и предупреждения
     question: Optional[str]                     # ОДИН короткий уточняющий вопрос гостю
     cart: CartView
+    upsell: Optional[UpsellView] = None         # допродажа
 
 
 # ---------------------------------------------------------------- цены
@@ -97,30 +102,65 @@ def _same(a: CartLine, b: CartLine) -> bool:
 class CartSession:
     """Корзина одного гостя."""
 
-    def __init__(self, menu: Menu):
+    def __init__(self, menu: Menu, upsell_rules: Optional[list[UpsellRule]] = None):
         self.menu = menu
+        self.upsell_rules = upsell_rules or []
         self.lines: list[CartLine] = []
         self.status: Literal["open", "confirmed", "cancelled"] = "open"
         self._last: Optional[CartLine] = None       # строка, с которой гость работал последней
+        self.offered: set[str] = set()              # что уже предлагали в этом заказе
+        self.upsell_offer: Optional[str] = None     # ждем "да" или "нет"
 
     # ------------------------------------------------------------ вход
-    def handle(self, cmds: list[Command]) -> Reply:
-        """Command из NLU -> Action -> корзина."""
+    def handle(self, cmds: list[Command], text: str = "") -> Reply:
+        # text нужен, чтобы понять "нет" на допродажу
+        offer, self.upsell_offer = self.upsell_offer, None
+        if offer:
+            if len(cmds) == 1 and cmds[0].intent == Intent.confirm:     # "да" на допродажу
+                return self.apply([Action(type="add_item", item_id=offer)])
+            if _NO_RE.match(text.strip().lower()):                      # "нет" - ничего не меняем
+                return Reply(actions=[], notes=[], question=None, cart=self.view())
         actions, notes = to_actions(cmds, self.menu, self.pending_state())
         reply = self.apply(actions)
         reply.notes = notes + reply.notes
         return reply
 
     def apply(self, actions: list[Action]) -> Reply:
+        self.upsell_offer = None
         self._notes: list[str] = []
         self._asks: list[str] = []
         self._removed: Optional[tuple[int, CartLine]] = None
+        self._added = False
         for a in actions:
             if a.type in _MUTATING and self.status != "open":
                 self.status = "open"                 # после confirm/clear гость продолжает заказ
             getattr(self, f"_{a.type}")(a)
         question = self._asks[0] if self._asks else self._combo_question()
-        return Reply(actions=actions, notes=self._notes + self._asks[1:], question=question, cart=self.view())
+        upsell = None
+        if self._added and question is None and self.status == "open":
+            upsell = pick_offer(self.upsell_rules, self.menu, [l.item_id for l in self.lines], self.offered)
+            if upsell:
+                self.offered.add(upsell.item_id)
+                self.upsell_offer = upsell.item_id
+        return Reply(actions=actions, notes=self._notes + self._asks[1:], question=question, cart=self.view(),
+                     upsell=upsell)
+
+    # хранение в sqlite
+    def to_state(self) -> dict:
+        last = next((i for i, l in enumerate(self.lines) if l is self._last), None)
+        return {"lines": [l.model_dump(mode="json") for l in self.lines], "status": self.status, "last": last,
+                "offered": sorted(self.offered), "upsell_offer": self.upsell_offer}
+
+    @classmethod
+    def from_state(cls, menu: Menu, state: dict, upsell_rules: Optional[list[UpsellRule]] = None) -> "CartSession":
+        s = cls(menu, upsell_rules)
+        s.lines = [CartLine.model_validate(l) for l in state.get("lines", [])]
+        s.status = state.get("status", "open")
+        last = state.get("last")
+        s._last = s.lines[last] if last is not None and last < len(s.lines) else None
+        s.offered = set(state.get("offered", []))
+        s.upsell_offer = state.get("upsell_offer")
+        return s
 
     def context(self) -> CartContext:
         return CartContext(lines=[CartLineView(index=i, menu_item_id=l.item_id, quantity=l.quantity, size=l.size)
@@ -142,7 +182,9 @@ class CartSession:
         return self._ask_text(self.missing(line)[0]) if line else None
 
     def _ask_text(self, ch: ComboChoice, options: Optional[list[str]] = None) -> str:
-        return f"{ch.question}: {self._or([self._label(ch, o) for o in options or ch.options])}?"
+        options = [o for o in options or ch.options
+                   if ch.kind != "item" or (self.menu.item(o) and self.menu.item(o).available)] or ch.options
+        return f"{ch.question}: {self._or([self._label(ch, o) for o in options])}?"
 
     # ------------------------------------------------------------ действия
     def _add_item(self, a: Action) -> None:
@@ -154,6 +196,10 @@ class CartSession:
         if not item:
             self._notes.append(f"Такого нет в меню: «{a.raw or a.item_id}»")
             return
+        if not item.available:
+            self._notes.append(f"Извините, «{item.name}» сейчас нет в наличии")
+            return
+        self._added = True
         line = CartLine(item_id=item.id, quantity=a.quantity or 1)
         old = self._removed[1] if a.replaces and self._removed else None
         if old:                                      # «замени колу на спрайт»: кол-во/размер/добавки от старой
@@ -198,12 +244,18 @@ class CartSession:
             self._last = None
 
     def _change_quantity(self, a: Action) -> None:
+        if not a.quantity:                           # неполное действие от кнопки
+            self._notes.append("Не понял, сколько штук")
+            return
         line = self._resolve(a.target)
         if line:
             line.quantity = a.quantity
             self._last = line
 
     def _change_size(self, a: Action) -> None:
+        if a.size is None:
+            self._notes.append("Не понял, какой размер")
+            return
         line = self._resolve(a.target)
         if not line:
             return
@@ -244,8 +296,11 @@ class CartSession:
         self._notes.append("Корзина очищена")
 
     def _confirm(self, a: Action) -> None:
+        gone = [self.menu.item(l.item_id).name for l in self.lines if not self.menu.item(l.item_id).available]
         if not self.lines:
             self._notes.append("Корзина пуста, нечего подтверждать")
+        elif gone:                                   # блюдо закончилось, пока гость думал
+            self._notes.append(f"Закончилось: {', '.join(gone)}. Уберите из заказа или замените")
         elif self.pending_line():
             self._notes.append("Сначала завершите выбор в комбо")
         else:
@@ -279,6 +334,10 @@ class CartSession:
         ch = item.choice(cid)
         if not ch:
             self._notes.append(f"В «{item.name}» нечего выбирать")
+            return
+        if value in ch.options and ch.kind == "item" and not self.menu.item(value).available:
+            self._notes.append(f"Извините, «{self._name(value)}» сейчас нет в наличии")
+            self._asks.append(self._ask_text(ch))
             return
         if value not in ch.options:
             if value or raw:

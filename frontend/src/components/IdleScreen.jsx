@@ -1,5 +1,6 @@
 import { photoFor } from '../kioskData.js'
 import { IcMic } from './Icons.jsx'
+import { LANGS } from '../i18n.js'
 
 const SHOW = ['burger', 'fries', 'cola', 'combo', 'ice_cream', 'latte']
 
@@ -25,8 +26,9 @@ export default function IdleScreen({ ui, lang, setLang, onStart, onVoice, canVoi
         )}
         <button className="idle-tap" onClick={onStart}>{ui.idleTap}</button>
         <div className="seg idle-lang">
-          <button className={lang === 'ru' ? 'on' : ''} onClick={() => setLang('ru')}>Русский</button>
-          <button className={lang === 'kz' ? 'on' : ''} onClick={() => setLang('kz')}>Қазақша</button>
+          {LANGS.map((l) => (
+            <button key={l.id} className={lang === l.id ? 'on' : ''} onClick={() => setLang(l.id)}>{l.long}</button>
+          ))}
         </div>
       </div>
     </div>

@@ -1,8 +1,7 @@
 """Неполные / кривые Action: корзина не должна падать и не должна портить сессию.
 
 Такие Action придут не от NLU, а от кнопок киоска (см. frontend/BACKEND_PATCH.md, /cart/{id}/actions),
-поэтому схема их не гарантирует. xfail(strict=True) = известный баг: когда его починят, тест
-станет XPASS и упадёт — тогда просто удалите маркер.
+поэтому схема их не гарантирует. B1/B2 из QA-отчёта починены: неполное действие пропускается с заметкой.
 """
 import pytest
 
@@ -25,13 +24,11 @@ def survives(s: CartSession, action: Action) -> None:
     assert all(isinstance(l.quantity, int) and l.quantity >= 1 for l in view.lines)
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: change_quantity без quantity пишет None в строку, view() падает")
 @pytest.mark.parametrize("item_id", ["cola", "combo"])
 def test_change_quantity_without_quantity(item_id):
     survives(cart_with(item_id), Action(type="change_quantity"))
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: change_size без size -> AttributeError: None.value")
 @pytest.mark.parametrize("item_id", ["cola", "combo"])
 def test_change_size_without_size(item_id):
     survives(cart_with(item_id), Action(type="change_size"))

@@ -1,43 +1,168 @@
 {
+ "_note": "Меню I'M (im.kz), цены с сайта на 02.11.2026, в тиынах (1/100 ₸). На сайте одна цена — это размер M. Цены S/L, платные добавки и состав комбо — наши допущения, на сайте их нет.",
  "items": [
   {
-   "id": "burger",
-   "name": "Бургер",
+   "id": "cheeseburger",
+   "name": "Чизбургер",
+   "name_kk": "Чизбургер",
+   "name_en": "Cheeseburger",
    "category": "burger",
-   "price_cents": 180000,
+   "price_cents": 95000,
+   "available": true,
+   "aliases": [
+    "чизбургер",
+    "чиз",
+    "cheeseburger"
+   ],
    "modifiers": [
     "onion",
+    "pickles",
     "cheese",
-    "ketchup",
-    "garlic_sauce",
-    "mayo"
+    "jalapeno"
    ]
   },
   {
-   "id": "chicken_burger",
-   "name": "Чикен бургер",
+   "id": "hamburger",
+   "name": "Гамбургер",
+   "name_kk": "Гамбургер",
+   "name_en": "Hamburger",
+   "category": "burger",
+   "price_cents": 90000,
+   "available": true,
+   "aliases": [
+    "гамбургер",
+    "бургер",
+    "hamburger",
+    "burger"
+   ],
+   "modifiers": [
+    "onion",
+    "pickles",
+    "cheese",
+    "jalapeno"
+   ]
+  },
+  {
+   "id": "chickenburger",
+   "name": "Чикенбургер",
+   "name_kk": "Тауық бургері",
+   "name_en": "Chickenburger",
+   "category": "burger",
+   "price_cents": 90000,
+   "available": true,
+   "aliases": [
+    "чикенбургер",
+    "чикен бургер",
+    "куриный бургер",
+    "тауық бургер",
+    "chickenburger"
+   ],
+   "modifiers": [
+    "onion",
+    "cheese",
+    "jalapeno"
+   ]
+  },
+  {
+   "id": "double_cheeseburger",
+   "name": "Дабл Чизбургер",
+   "name_kk": "Қос чизбургер",
+   "name_en": "Double Cheeseburger",
+   "category": "burger",
+   "price_cents": 155000,
+   "available": true,
+   "aliases": [
+    "дабл чизбургер",
+    "двойной чизбургер",
+    "double cheeseburger",
+    "қос чизбургер"
+   ],
+   "modifiers": [
+    "onion",
+    "pickles",
+    "cheese",
+    "jalapeno"
+   ]
+  },
+  {
+   "id": "big_burger",
+   "name": "Биг Бургер",
+   "name_kk": "Биг Бургер",
+   "name_en": "Big Burger",
+   "category": "burger",
+   "price_cents": 220000,
+   "available": true,
+   "aliases": [
+    "биг бургер",
+    "бигбургер",
+    "big burger"
+   ],
+   "modifiers": [
+    "onion",
+    "pickles",
+    "cheese",
+    "jalapeno"
+   ]
+  },
+  {
+   "id": "beef_tasty",
+   "name": "Биф Тейсти",
+   "name_kk": "Биф Тейсти",
+   "name_en": "Beef Tasty",
+   "category": "burger",
+   "price_cents": 310000,
+   "available": true,
+   "aliases": [
+    "биф тейсти",
+    "бифтейсти",
+    "beef tasty"
+   ],
+   "modifiers": [
+    "onion",
+    "pickles",
+    "cheese",
+    "jalapeno"
+   ]
+  },
+  {
+   "id": "chicken_classic",
+   "name": "Чикен Классик",
+   "name_kk": "Чикен Классик",
+   "name_en": "Chicken Classic",
    "category": "burger",
    "price_cents": 170000,
+   "available": true,
+   "aliases": [
+    "чикен классик",
+    "chicken classic"
+   ],
    "modifiers": [
     "onion",
     "cheese",
-    "ketchup",
-    "garlic_sauce",
-    "mayo"
+    "jalapeno"
    ]
   },
   {
-   "id": "combo",
-   "name": "Комбо",
+   "id": "combo_big_burger",
+   "name": "Комбо Биг Бургер",
+   "name_kk": "Биг Бургер комбо",
+   "name_en": "Big Burger Combo",
    "category": "combo",
-   "price_cents": 290000,
-   "combo": true,
+   "price_cents": 325000,
+   "available": true,
+   "aliases": [
+    "комбо",
+    "combo",
+    "сет",
+    "комбо биг бургер",
+    "combo big burger"
+   ],
    "modifiers": [
     "onion",
-    "cheese",
-    "ketchup",
-    "garlic_sauce"
+    "pickles",
+    "cheese"
    ],
+   "combo": true,
    "choices": [
     {
      "id": "drink",
@@ -45,9 +170,10 @@
      "kind": "item",
      "question": "Какой напиток к комбо",
      "options": [
-      "cola",
+      "coca_cola",
       "sprite",
-      "fanta"
+      "fanta",
+      "water"
      ]
     },
     {
@@ -57,22 +183,157 @@
      "question": "Какой гарнир к комбо",
      "options": [
       "fries",
-      "nuggets"
+      "potato_wedges"
+     ],
+     "price_delta_cents": {
+      "potato_wedges": 30000
+     }
+    }
+   ]
+  },
+  {
+   "id": "combo_double_cheeseburger",
+   "name": "Комбо Дабл Чизбургер",
+   "name_kk": "Қос чизбургер комбо",
+   "name_en": "Double Cheeseburger Combo",
+   "category": "combo",
+   "price_cents": 270000,
+   "available": true,
+   "aliases": [
+    "комбо",
+    "combo",
+    "сет",
+    "комбо дабл чизбургер",
+    "комбо чизбургер"
+   ],
+   "modifiers": [
+    "onion",
+    "pickles",
+    "cheese"
+   ],
+   "combo": true,
+   "choices": [
+    {
+     "id": "drink",
+     "label": "напиток",
+     "kind": "item",
+     "question": "Какой напиток к комбо",
+     "options": [
+      "coca_cola",
+      "sprite",
+      "fanta",
+      "water"
      ]
     },
     {
-     "id": "size",
-     "label": "размер",
-     "kind": "size",
-     "question": "Какой размер комбо",
+     "id": "side",
+     "label": "гарнир",
+     "kind": "item",
+     "question": "Какой гарнир к комбо",
      "options": [
-      "S",
-      "M",
-      "L"
+      "fries",
+      "potato_wedges"
      ],
      "price_delta_cents": {
-      "S": -10000,
-      "L": 20000
+      "potato_wedges": 30000
+     }
+    }
+   ]
+  },
+  {
+   "id": "combo_chicken_classic",
+   "name": "Комбо Чикен Классик",
+   "name_kk": "Чикен Классик комбо",
+   "name_en": "Chicken Classic Combo",
+   "category": "combo",
+   "price_cents": 265000,
+   "available": true,
+   "aliases": [
+    "комбо",
+    "combo",
+    "сет",
+    "комбо чикен классик",
+    "комбо чикен"
+   ],
+   "modifiers": [
+    "onion",
+    "pickles",
+    "cheese"
+   ],
+   "combo": true,
+   "choices": [
+    {
+     "id": "drink",
+     "label": "напиток",
+     "kind": "item",
+     "question": "Какой напиток к комбо",
+     "options": [
+      "coca_cola",
+      "sprite",
+      "fanta",
+      "water"
+     ]
+    },
+    {
+     "id": "side",
+     "label": "гарнир",
+     "kind": "item",
+     "question": "Какой гарнир к комбо",
+     "options": [
+      "fries",
+      "potato_wedges"
+     ],
+     "price_delta_cents": {
+      "potato_wedges": 30000
+     }
+    }
+   ]
+  },
+  {
+   "id": "combo_nuggets",
+   "name": "Комбо Наггетс 6 шт.",
+   "name_kk": "Наггетс комбо",
+   "name_en": "Nuggets Combo (6 pcs)",
+   "category": "combo",
+   "price_cents": 235000,
+   "available": true,
+   "aliases": [
+    "комбо",
+    "combo",
+    "сет",
+    "комбо наггетс",
+    "комбо наггетсы"
+   ],
+   "modifiers": [
+    "onion",
+    "pickles",
+    "cheese"
+   ],
+   "combo": true,
+   "choices": [
+    {
+     "id": "drink",
+     "label": "напиток",
+     "kind": "item",
+     "question": "Какой напиток к комбо",
+     "options": [
+      "coca_cola",
+      "sprite",
+      "fanta",
+      "water"
+     ]
+    },
+    {
+     "id": "side",
+     "label": "гарнир",
+     "kind": "item",
+     "question": "Какой гарнир к комбо",
+     "options": [
+      "fries",
+      "potato_wedges"
+     ],
+     "price_delta_cents": {
+      "potato_wedges": 30000
      }
     }
    ]
@@ -80,8 +341,22 @@
   {
    "id": "fries",
    "name": "Картофель фри",
+   "name_kk": "Фри картобы",
+   "name_en": "French Fries",
    "category": "side",
-   "price_cents": 90000,
+   "price_cents": 65000,
+   "available": true,
+   "aliases": [
+    "картофель фри",
+    "картошка фри",
+    "картошка",
+    "фри",
+    "free",
+    "fries",
+    "фри картобы",
+    "картоп"
+   ],
+   "modifiers": [],
    "sizes": [
     "S",
     "M",
@@ -89,165 +364,121 @@
    ],
    "default_size": "M",
    "size_prices_cents": {
-    "S": 80000,
-    "M": 90000,
-    "L": 110000
-   },
-   "modifiers": [
-    "ketchup",
-    "garlic_sauce"
-   ]
+    "S": 55000,
+    "M": 65000,
+    "L": 85000
+   }
+  },
+  {
+   "id": "potato_wedges",
+   "name": "Картофель по-деревенски",
+   "name_kk": "Ауылша картоп",
+   "name_en": "Potato Wedges",
+   "category": "side",
+   "price_cents": 95000,
+   "available": true,
+   "aliases": [
+    "по деревенски",
+    "деревенская картошка",
+    "картошка по деревенски",
+    "ауылша картоп",
+    "wedges"
+   ],
+   "modifiers": []
   },
   {
    "id": "nuggets",
    "name": "Наггетсы",
+   "name_kk": "Наггетстер",
+   "name_en": "Nuggets",
    "category": "side",
-   "price_cents": 130000,
-   "modifiers": [
-    "ketchup",
-    "garlic_sauce"
-   ]
-  },
-  {
-   "id": "salad",
-   "name": "Салат",
-   "category": "side",
-   "price_cents": 110000,
-   "modifiers": [
-    "onion",
-    "cheese"
-   ]
-  },
-  {
-   "id": "cola",
-   "name": "Кока-кола",
-   "category": "drink",
-   "price_cents": 60000,
-   "sizes": [
-    "S",
-    "M",
-    "L"
+   "price_cents": 80000,
+   "available": true,
+   "aliases": [
+    "наггетсы",
+    "наггетс",
+    "нагетсы",
+    "nuggets"
    ],
-   "default_size": "M",
-   "size_prices_cents": {
-    "S": 50000,
-    "M": 60000,
-    "L": 80000
-   },
-   "modifiers": [
-    "ice"
-   ]
-  },
-  {
-   "id": "sprite",
-   "name": "Спрайт",
-   "category": "drink",
-   "price_cents": 60000,
-   "sizes": [
-    "S",
-    "M",
-    "L"
-   ],
-   "default_size": "M",
-   "size_prices_cents": {
-    "S": 50000,
-    "M": 60000,
-    "L": 80000
-   },
-   "modifiers": [
-    "ice"
-   ]
-  },
-  {
-   "id": "fanta",
-   "name": "Фанта",
-   "category": "drink",
-   "price_cents": 60000,
-   "sizes": [
-    "S",
-    "M",
-    "L"
-   ],
-   "default_size": "M",
-   "size_prices_cents": {
-    "S": 50000,
-    "M": 60000,
-    "L": 80000
-   },
-   "modifiers": [
-    "ice"
-   ]
-  },
-  {
-   "id": "water",
-   "name": "Вода",
-   "category": "drink",
-   "price_cents": 30000,
    "modifiers": []
   },
   {
-   "id": "juice_apple",
-   "name": "Сок яблочный",
+   "id": "strips",
+   "name": "Стрипсы",
+   "name_kk": "Стрипстер",
+   "name_en": "Chicken Strips",
+   "category": "side",
+   "price_cents": 140000,
+   "available": true,
+   "aliases": [
+    "стрипсы",
+    "стрипс",
+    "strips"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "ketchup",
+   "name": "Кетчуп",
+   "name_kk": "Кетчуп",
+   "name_en": "Ketchup",
+   "category": "sauce",
+   "price_cents": 20000,
+   "available": true,
+   "aliases": [
+    "кетчуп",
+    "ketchup"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "cheese_sauce",
+   "name": "Сырный соус",
+   "name_kk": "Ірімшік соусы",
+   "name_en": "Cheese Sauce",
+   "category": "sauce",
+   "price_cents": 20000,
+   "available": true,
+   "aliases": [
+    "сырный соус",
+    "сырный",
+    "ірімшік соусы"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "bbq_sauce",
+   "name": "Соус Барбекю",
+   "name_kk": "Барбекю соусы",
+   "name_en": "BBQ Sauce",
+   "category": "sauce",
+   "price_cents": 20000,
+   "available": true,
+   "aliases": [
+    "барбекю",
+    "соус барбекю",
+    "bbq"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "coca_cola",
+   "name": "Coca-Cola",
+   "name_kk": "Coca-Cola",
+   "name_en": "Coca-Cola",
    "category": "drink",
-   "price_cents": 70000,
+   "price_cents": 45000,
+   "available": true,
+   "aliases": [
+    "кока кола",
+    "кола",
+    "coca cola",
+    "cola",
+    "кока-кола"
+   ],
    "modifiers": [
     "ice"
-   ]
-  },
-  {
-   "id": "juice_orange",
-   "name": "Сок апельсиновый",
-   "category": "drink",
-   "price_cents": 70000,
-   "modifiers": [
-    "ice"
-   ]
-  },
-  {
-   "id": "latte",
-   "name": "Латте",
-   "category": "drink",
-   "price_cents": 100000,
-   "sizes": [
-    "S",
-    "M",
-    "L"
    ],
-   "default_size": "M",
-   "size_prices_cents": {
-    "S": 90000,
-    "M": 100000,
-    "L": 120000
-   },
-   "modifiers": [
-    "sugar"
-   ]
-  },
-  {
-   "id": "coffee",
-   "name": "Кофе",
-   "category": "drink",
-   "price_cents": 80000,
-   "sizes": [
-    "S",
-    "M",
-    "L"
-   ],
-   "default_size": "M",
-   "size_prices_cents": {
-    "S": 70000,
-    "M": 80000,
-    "L": 100000
-   },
-   "modifiers": [
-    "sugar"
-   ]
-  },
-  {
-   "id": "tea",
-   "name": "Чай",
-   "category": "drink",
-   "price_cents": 50000,
    "sizes": [
     "S",
     "M",
@@ -256,18 +487,220 @@
    "default_size": "M",
    "size_prices_cents": {
     "S": 40000,
-    "M": 50000,
-    "L": 70000
-   },
+    "M": 45000,
+    "L": 60000
+   }
+  },
+  {
+   "id": "sprite",
+   "name": "Sprite",
+   "name_kk": "Sprite",
+   "name_en": "Sprite",
+   "category": "drink",
+   "price_cents": 45000,
+   "available": true,
+   "aliases": [
+    "спрайт",
+    "sprite"
+   ],
+   "modifiers": [
+    "ice"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "default_size": "M",
+   "size_prices_cents": {
+    "S": 40000,
+    "M": 45000,
+    "L": 60000
+   }
+  },
+  {
+   "id": "fanta",
+   "name": "Fanta",
+   "name_kk": "Fanta",
+   "name_en": "Fanta",
+   "category": "drink",
+   "price_cents": 45000,
+   "available": true,
+   "aliases": [
+    "фанта",
+    "fanta"
+   ],
+   "modifiers": [
+    "ice"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "default_size": "M",
+   "size_prices_cents": {
+    "S": 40000,
+    "M": 45000,
+    "L": 60000
+   }
+  },
+  {
+   "id": "water",
+   "name": "Вода BonAqua",
+   "name_kk": "BonAqua суы",
+   "name_en": "BonAqua Water",
+   "category": "drink",
+   "price_cents": 45000,
+   "available": true,
+   "aliases": [
+    "вода",
+    "бонаква",
+    "bonaqua",
+    "су",
+    "водичка"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "juice_orange",
+   "name": "Сок апельсиновый Piko",
+   "name_kk": "Апельсин шырыны",
+   "name_en": "Piko Orange Juice",
+   "category": "drink",
+   "price_cents": 50000,
+   "available": true,
+   "aliases": [
+    "апельсиновый сок",
+    "сок",
+    "нектар",
+    "сок апельсиновый",
+    "апельсин шырыны",
+    "шырын"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "milkshake",
+   "name": "Молочный коктейль ванильный",
+   "name_kk": "Сүт коктейлі",
+   "name_en": "Vanilla Milkshake",
+   "category": "drink",
+   "price_cents": 105000,
+   "available": true,
+   "aliases": [
+    "молочный коктейль",
+    "коктейль",
+    "милкшейк",
+    "milkshake",
+    "сүт коктейлі"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "americano",
+   "name": "Американо",
+   "name_kk": "Американо",
+   "name_en": "Americano",
+   "category": "drink",
+   "price_cents": 90000,
+   "available": true,
+   "aliases": [
+    "американо",
+    "кофе",
+    "americano",
+    "coffee"
+   ],
+   "modifiers": [
+    "sugar",
+    "syrup"
+   ]
+  },
+  {
+   "id": "latte",
+   "name": "Латте",
+   "name_kk": "Латте",
+   "name_en": "Latte",
+   "category": "drink",
+   "price_cents": 105000,
+   "available": true,
+   "aliases": [
+    "латте",
+    "latte",
+    "кофе латте"
+   ],
+   "modifiers": [
+    "sugar",
+    "syrup"
+   ]
+  },
+  {
+   "id": "tea",
+   "name": "Чай чёрный",
+   "name_kk": "Қара шай",
+   "name_en": "Black Tea",
+   "category": "drink",
+   "price_cents": 40000,
+   "available": true,
+   "aliases": [
+    "чай",
+    "чая",
+    "чаю",
+    "шай",
+    "tea",
+    "черный чай",
+    "қара шай"
+   ],
    "modifiers": [
     "sugar"
    ]
   },
   {
-   "id": "ice_cream",
-   "name": "Мороженое",
+   "id": "cinnabon",
+   "name": "Синнабон",
+   "name_kk": "Синнабон",
+   "name_en": "Cinnabon",
    "category": "dessert",
-   "price_cents": 70000,
+   "price_cents": 130000,
+   "available": true,
+   "aliases": [
+    "синнабон",
+    "булочка с корицей",
+    "cinnabon"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "ice_cream",
+   "name": "Мороженое рожок",
+   "name_kk": "Балмұздақ",
+   "name_en": "Ice Cream Cone",
+   "category": "dessert",
+   "price_cents": 50000,
+   "available": true,
+   "aliases": [
+    "рожок",
+    "мороженое",
+    "балмұздақ",
+    "ice cream"
+   ],
+   "modifiers": []
+  },
+  {
+   "id": "cherry_pie",
+   "name": "Вишнёвый пирожок",
+   "name_kk": "Шие бәліші",
+   "name_en": "Cherry Pie",
+   "category": "dessert",
+   "price_cents": 60000,
+   "available": true,
+   "aliases": [
+    "вишневый пирожок",
+    "пирожок",
+    "пирожок с вишней",
+    "шие бәліші",
+    "бәліш"
+   ],
    "modifiers": []
   }
  ],
@@ -275,44 +708,98 @@
   {
    "id": "onion",
    "name": "Лук",
+   "name_kk": "Пияз",
+   "name_en": "Onion",
    "gen": "лука",
-   "price_cents": 0
+   "price_cents": 0,
+   "aliases": [
+    "лук",
+    "пияз"
+   ]
+  },
+  {
+   "id": "pickles",
+   "name": "Огурцы",
+   "name_kk": "Қияр",
+   "name_en": "Pickles",
+   "gen": "огурцов",
+   "price_cents": 0,
+   "aliases": [
+    "огурец",
+    "огурцы",
+    "огурчик",
+    "огурчики",
+    "қияр"
+   ]
   },
   {
    "id": "cheese",
    "name": "Сыр",
+   "name_kk": "Ірімшік",
+   "name_en": "Cheese",
    "gen": "сыра",
-   "price_cents": 15000
+   "price_cents": 20000,
+   "aliases": [
+    "сыр",
+    "ірімшік",
+    "cheese"
+   ]
   },
   {
-   "id": "ketchup",
-   "name": "Кетчуп",
-   "gen": "кетчупа",
-   "price_cents": 15000
-  },
-  {
-   "id": "garlic_sauce",
-   "name": "Чесночный соус",
-   "gen": "чесночного соуса",
-   "price_cents": 15000
-  },
-  {
-   "id": "mayo",
-   "name": "Майонез",
-   "gen": "майонеза",
-   "price_cents": 15000
+   "id": "jalapeno",
+   "name": "Халапеньо",
+   "name_kk": "Халапеньо",
+   "name_en": "Jalapeño",
+   "gen": "халапеньо",
+   "price_cents": 20000,
+   "aliases": [
+    "халапеньо",
+    "острый перец",
+    "jalapeno"
+   ]
   },
   {
    "id": "ice",
    "name": "Лёд",
+   "name_kk": "Мұз",
+   "name_en": "Ice",
    "gen": "льда",
-   "price_cents": 0
+   "price_cents": 0,
+   "aliases": [
+    "лед",
+    "льда",
+    "льду",
+    "льдом",
+    "мұз",
+    "ice"
+   ]
   },
   {
    "id": "sugar",
    "name": "Сахар",
+   "name_kk": "Қант",
+   "name_en": "Sugar",
    "gen": "сахара",
-   "price_cents": 0
+   "price_cents": 0,
+   "aliases": [
+    "сахар",
+    "сахара",
+    "сахаром",
+    "қант"
+   ]
+  },
+  {
+   "id": "syrup",
+   "name": "Сироп",
+   "name_kk": "Сироп",
+   "name_en": "Syrup",
+   "gen": "сиропа",
+   "price_cents": 20000,
+   "aliases": [
+    "сироп",
+    "сиропом",
+    "syrup"
+   ]
   }
  ]
 }

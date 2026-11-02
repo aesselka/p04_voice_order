@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import unicodedata
 from pathlib import Path
@@ -28,7 +29,10 @@ class ComboChoice(BaseModel):
 class MenuItem(BaseModel):
     id: str
     name: str
+    name_kk: str = ""
+    name_en: str = ""
     category: str = ""
+    available: bool = True                    # false - нет в наличии
     aliases: list[str] = Field(default_factory=list)
     sizes: list[Size] = Field(default_factory=list)
     default_size: Optional[Size] = None
@@ -52,6 +56,8 @@ class MenuItem(BaseModel):
 class Modifier(BaseModel):
     id: str
     name: str
+    name_kk: str = ""
+    name_en: str = ""
     gen: str = ""                             # родительный падеж для «без лука»
     price_cents: int = 0                      # доплата, только когда добавку добавляют
     aliases: list[str] = Field(default_factory=list)
@@ -62,7 +68,9 @@ class Menu(BaseModel):
     modifiers: list[Modifier] = Field(default_factory=list)
 
     @classmethod
-    def load(cls, path: str | Path = DEFAULT_MENU_PATH) -> "Menu":
+    def load(cls, path: str | Path | None = None) -> "Menu":
+        # без пути: MENU_PATH из env, иначе data/menu.json
+        path = path or os.getenv("MENU_PATH") or DEFAULT_MENU_PATH
         return cls.model_validate(json.loads(Path(path).read_text(encoding="utf-8")))
 
     def item(self, item_id: str) -> Optional[MenuItem]:
@@ -162,6 +170,11 @@ class MenuIndex:
 
     def items_for_stem(self, s: str) -> set[str]:
         return self._stem_items.get(s, set())
+
+    def is_exact_modifier(self, word: str) -> bool:
+        # "с сыром" - это добавка, а не "Сырный соус"
+        s = stem(word)
+        return s in self._stem_mod and s not in self._stem_items
 
     def modifier_id(self, word: str) -> Optional[str]:
         s = self._lookup(word, self._mod_vocab, self._stem_mod)

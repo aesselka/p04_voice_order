@@ -5,13 +5,15 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 MENU_JSON = Path(__file__).resolve().parent.parent / "voice_cart_nlu" / "data" / "menu.json"
 
 
 class PriceOracle:
-    def __init__(self, path: Path = MENU_JSON):
+    def __init__(self, path: Path | None = None):
+        path = path or os.getenv("MENU_PATH") or MENU_JSON
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
         self.items = {i["id"]: i for i in raw["items"]}
         self.mods = {m["id"]: m for m in raw["modifiers"]}

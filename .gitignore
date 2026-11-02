@@ -42,3 +42,7 @@ desktop.ini
 voice_eval/recordings/
 .hypothesis/
 evals/reports/*.json
+
+# sqlite корзин
+carts.db
+*.db-journal
