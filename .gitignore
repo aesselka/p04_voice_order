@@ -37,3 +37,8 @@ desktop.ini
 
 # Logs
 *.log
+
+# QA: голосовые записи — личные данные дикторов, в git не кладём
+voice_eval/recordings/
+.hypothesis/
+evals/reports/*.json

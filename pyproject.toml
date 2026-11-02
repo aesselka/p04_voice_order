@@ -1,0 +1,19 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["voice_cart_nlu"]
+omit = ["voice_cart_nlu/stt.py", "voice_cart_nlu/llm_parser.py"]   # внешние API, покрываются eval/voice_eval
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+# только настоящие ошибки (синтаксис, неопределённые имена, неиспользуемые импорты), без стиля
+select = ["E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# код команды: неиспользуемые импорты/переменные не валят CI (список — в QA-отчёте), остальные F — валят
+"voice_cart_nlu/*" = ["F401", "F841"]

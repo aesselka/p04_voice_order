@@ -1,0 +1,235 @@
+# Эталонные диалоги (golden set). Каждый = новый гость, реплики по порядку.
+#
+#   expect.cart       итоговая корзина; порядок строк не важен.
+#                     size для напитков/кофе/фри: если гость не назвал — M (размер по умолчанию)
+#                     mods: {modifier_id: add|remove}, choices: {choice_id: value} — для комбо
+#   expect.status     open (по умолчанию) | confirmed | cancelled
+#   expect.questions  сколько уточняющих вопросов НУЖНО задать за диалог.
+#                     Больше — «лишние уточнения», меньше — система что-то угадала молча.
+#
+# Правило команды: каждый найденный баг -> новый диалог сюда (тег regression).
+
+- id: add_simple
+  tags: [add, ru]
+  turns: ["Один бургер, пожалуйста"]
+  expect: {cart: [{item: burger, qty: 1}]}
+
+- id: add_two_items
+  tags: [add, ru]
+  turns: ["Мне два чизбургера... то есть два бургера и большую колу"]
+  expect: {cart: [{item: burger, qty: 2}, {item: cola, qty: 1, size: L}]}
+
+- id: add_three_items
+  tags: [add, ru]
+  turns: ["Наггетсы, салат и апельсиновый сок"]
+  expect: {cart: [{item: nuggets, qty: 1}, {item: salad, qty: 1}, {item: juice_orange, qty: 1}]}
+
+- id: add_mods
+  tags: [add, mods, ru]
+  turns: ["Чикен бургер без лука и с сыром"]
+  expect: {cart: [{item: chicken_burger, qty: 1, mods: {onion: remove, cheese: add}}]}
+
+- id: add_default_size
+  tags: [add, ru]
+  turns: ["Латте"]
+  expect: {cart: [{item: latte, qty: 1, size: M}]}
+
+- id: add_numbers_as_words
+  tags: [add, ru]
+  turns: ["Три воды и пять мороженых"]
+  expect: {cart: [{item: water, qty: 3}, {item: ice_cream, qty: 5}]}
+
+- id: remove_ordinal_line
+  tags: [remove, reference, ru]
+  turns: ["Бургер", "Фанту", "Наггетсы", "Второе убери"]
+  expect: {cart: [{item: burger, qty: 1}, {item: nuggets, qty: 1}]}
+
+- id: remove_last
+  tags: [remove, reference, ru]
+  turns: ["Салат и чай", "Убери последнее"]
+  expect: {cart: [{item: salad, qty: 1}]}
+
+- id: remove_partial_quantity
+  tags: [remove, ru]
+  turns: ["Четыре наггетса", "Убери два наггетса"]
+  expect: {cart: [{item: nuggets, qty: 2}]}
+
+- id: remove_by_name_negation
+  tags: [remove, ru]
+  turns: ["Бургер и спрайт", "Спрайт не нужен"]
+  expect: {cart: [{item: burger, qty: 1}]}
+
+- id: modify_size
+  tags: [modify, ru]
+  turns: ["Кофе", "Кофе сделай маленьким"]
+  expect: {cart: [{item: coffee, qty: 1, size: S}]}
+
+- id: modify_implicit_target
+  tags: [modify, reference, ru]
+  turns: ["Чай", "С сахаром"]
+  expect: {cart: [{item: tea, qty: 1, size: M, mods: {sugar: add}}]}
+
+- id: modify_second_of_same
+  tags: [modify, reference, ru]
+  turns: ["Два кофе", "Второй кофе сделай большим"]
+  expect: {cart: [{item: coffee, qty: 1, size: M}, {item: coffee, qty: 1, size: L}]}
+
+- id: replace_keeps_size
+  tags: [modify, replace, ru]
+  turns: ["Большую колу", "Замени колу на фанту"]
+  expect: {cart: [{item: fanta, qty: 1, size: L}]}
+
+- id: replace_then_add
+  tags: [modify, remove, add, ru]
+  turns: ["Кола", "Убери колу и добавь воду"]
+  expect: {cart: [{item: water, qty: 1}]}
+
+- id: task_scenario_combo
+  tags: [combo, remove, reference, ru, task]
+  turns: ["Два комбо", "Колу", "Картошку фри", "Средний", "Второе убери", "И колу отдельно", "Колу сделай большой"]
+  expect:
+    cart:
+      - {item: combo, qty: 1, choices: {drink: cola, side: fries, size: M}}
+      - {item: cola, qty: 1, size: L}
+    questions: 3
+
+- id: combo_all_in_one
+  tags: [combo, ru]
+  turns: ["Большое комбо со спрайтом и наггетсами"]
+  expect: {cart: [{item: combo, qty: 1, choices: {drink: sprite, side: nuggets, size: L}}], questions: 0}
+
+- id: combo_partial
+  tags: [combo, ru]
+  turns: ["Комбо с фантой", "Фри", "Маленький"]
+  expect: {cart: [{item: combo, qty: 1, choices: {drink: fanta, side: fries, size: S}}], questions: 2}
+
+- id: combo_invalid_option
+  tags: [combo, edge, ru]
+  turns: ["Комбо", "Воду", "Спрайт", "Наггетсы", "Средний"]
+  expect: {cart: [{item: combo, qty: 1, choices: {drink: sprite, side: nuggets, size: M}}], questions: 4}
+
+- id: ambiguous_juice
+  tags: [ambiguous, ru]
+  turns: ["Сок", "Яблочный"]
+  expect: {cart: [{item: juice_apple, qty: 1}], questions: 1}
+
+- id: unknown_item
+  tags: [edge, ru]
+  turns: ["Хочу шаурму"]
+  expect: {cart: []}
+
+- id: cancel_order
+  tags: [cancel, ru]
+  turns: ["Бургер и кола", "Отмени весь заказ"]
+  expect: {cart: [], status: cancelled}
+
+- id: cancel_then_continue
+  tags: [cancel, ru]
+  turns: ["Два бургера", "Давай заново", "Один кофе"]
+  expect: {cart: [{item: coffee, qty: 1, size: M}]}
+
+- id: confirm
+  tags: [confirm, ru]
+  turns: ["Салат", "Да, подтверждаю"]
+  expect: {cart: [{item: salad, qty: 1}], status: confirmed}
+
+- id: confirm_blocked_by_pending_combo
+  tags: [confirm, combo, edge, ru]
+  turns: ["Комбо", "Подтверждаю"]
+  expect: {cart: [{item: combo, qty: 1}], status: open, questions: 2}
+
+- id: modifier_not_allowed
+  tags: [edge, mods, ru]
+  turns: ["Колу с сыром"]
+  expect: {cart: [{item: cola, qty: 1, size: M}]}
+
+- id: size_not_allowed
+  tags: [edge, ru]
+  turns: ["Большой салат"]
+  expect: {cart: [{item: salad, qty: 1}]}
+
+- id: modifier_toggle
+  tags: [mods, modify, ru]
+  turns: ["Бургер с майонезом", "Нет, без майонеза"]
+  expect: {cart: [{item: burger, qty: 1}]}
+
+- id: stt_typo
+  tags: [stt_noise, ru]
+  turns: ["хочу коллу"]
+  expect: {cart: [{item: cola, qty: 1, size: M}]}
+
+- id: stt_brand_name
+  tags: [stt_noise, ru]
+  turns: ["кока колу большую"]
+  expect: {cart: [{item: cola, qty: 1, size: L}]}
+
+- id: stt_filler_words
+  tags: [stt_noise, ru]
+  turns: ["эээ ну давайте мне наверное нагетсы"]
+  expect: {cart: [{item: nuggets, qty: 1}]}
+
+- id: kk_add
+  tags: [add, kk]
+  turns: ["Екі бургер беріңіз"]
+  expect: {cart: [{item: burger, qty: 2}]}
+
+- id: kk_size
+  tags: [add, kk]
+  turns: ["Үлкен шай"]
+  expect: {cart: [{item: tea, qty: 1, size: L}]}
+
+- id: kk_remove_ordinal
+  tags: [remove, reference, kk]
+  turns: ["Бургер", "Кола", "Екіншісін алып таста"]
+  expect: {cart: [{item: burger, qty: 1}]}
+
+- id: kk_modify_size
+  tags: [modify, kk]
+  turns: ["Кофе", "Кофе кіші болсын"]
+  expect: {cart: [{item: coffee, qty: 1, size: S}]}
+
+- id: kk_without_onion
+  tags: [add, mods, kk]
+  turns: ["Чикен бургер пиязсыз"]
+  expect: {cart: [{item: chicken_burger, qty: 1, mods: {onion: remove}}]}
+
+- id: kk_confirm
+  tags: [confirm, kk]
+  turns: ["Үш су", "Растаймын"]
+  expect: {cart: [{item: water, qty: 3}], status: confirmed}
+
+- id: kk_cancel
+  tags: [cancel, kk]
+  turns: ["Бургер", "Тапсырыстан бас тартамын"]
+  expect: {cart: [], status: cancelled}
+
+- id: mixed_add
+  tags: [add, mixed]
+  turns: ["Екі бургер и большую колу"]
+  expect: {cart: [{item: burger, qty: 2}, {item: cola, qty: 1, size: L}]}
+
+- id: mixed_modify
+  tags: [modify, mixed]
+  turns: ["Два кофе", "Біреуін үлкен сделай"]
+  expect: {cart: [{item: coffee, qty: 1, size: M}, {item: coffee, qty: 1, size: L}]}
+
+- id: mixed_ice
+  tags: [mods, mixed]
+  turns: ["Спрайт мұзсыз"]
+  expect: {cart: [{item: sprite, qty: 1, size: M, mods: {ice: remove}}]}
+
+# --- regression: найдено на Amazon MASSIVE (evals/reports/massive.md)
+- id: regression_restaurant_name_not_fanta
+  tags: [regression, edge, ru]
+  turns: ["Закажи что-нибудь в Мо Фан"]
+  expect: {cart: []}
+
+- id: regression_chicken_soup_not_burger
+  tags: [regression, edge, ru]
+  turns: ["Куриный суп с лапшой"]
+  expect: {cart: []}
+
+- id: regression_price_question_not_order
+  tags: [regression, edge, ru]
+  turns: ["Сколько стоит бургер?"]
+  expect: {cart: []}
