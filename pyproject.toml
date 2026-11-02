@@ -1,5 +1,6 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]          # чтобы голый pytest (как в CI) находил voice_cart_nlu
 addopts = "-q"
 
 [tool.coverage.run]
