@@ -57,7 +57,7 @@ class VoiceCommandPipeline:
 def build_pipeline() -> VoiceCommandPipeline:
     """Конфигурация из env: ELEVENLABS_API_KEY / STT_PROVIDER=whisper, ANTHROPIC_API_KEY, MENU_PATH."""
     from .stt import ElevenLabsSTT, FallbackSTT, WhisperSTT
-    menu = Menu.load(os.getenv("MENU_PATH")) if os.getenv("MENU_PATH") else Menu.load()
+    menu = Menu.load()
     stt = None
     if os.getenv("STT_PROVIDER", "elevenlabs") == "whisper":
         stt = WhisperSTT(os.getenv("WHISPER_MODEL", "large-v3"))

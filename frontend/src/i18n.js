@@ -46,6 +46,7 @@ export const UI = {
     autoReset: (s) => `Новый заказ через ${s} с`,
     metricsHint: 'считаются за всю сессию киоска', ordersDone: 'заказов подтверждено',
     resetMetrics: 'Сбросить', runDemo: '▶ Прогнать демо-диалог', demoRunning: 'Идёт демо...',
+    error: 'Ошибка', menuError: 'Ошибка загрузки меню', noBackend: 'Нет связи, попробуйте ещё раз',
   },
   kz: {
     navOrder: 'Тапсырыс', navMenu: 'Мәзір', navMetrics: 'Метрика', navActivity: 'Әрекеттер',
@@ -92,17 +93,74 @@ export const UI = {
     autoReset: (s) => `Жаңа тапсырыс ${s} с кейін`,
     metricsHint: 'киоск сессиясы бойынша', ordersDone: 'расталған тапсырыс',
     resetMetrics: 'Тазалау', runDemo: '▶ Демо-диалогты іске қосу', demoRunning: 'Демо жүріп жатыр...',
+    error: 'Қате', menuError: 'Мәзір жүктелмеді', noBackend: 'Байланыс жоқ, кейінірек қайталаңыз',
+  },
+  en: {
+    navOrder: 'Order', navMenu: 'Menu', navMetrics: 'Metrics', navActivity: 'Activity',
+    search: 'Search the menu...',
+    kItems: 'Items in order', kItemsSub: (n) => `${n} lines`,
+    kTotal: 'Total', kTotalSub: 'prices come from the backend',
+    kTurns: 'Turns', kTurnsSub: (c) => `clarifications: ${c}`,
+    kLatency: 'Latency', kLatencySub: (a) => `${a} ms on average`,
+    voice: 'Voice order',
+    cart: 'Order',
+    latencyChart: 'Latency per turn',
+    activity: 'Activity feed',
+    menu: 'Menu',
+    greeting: 'Hello! What would you like to order? For example: "two cheeseburgers and a Coca-Cola".',
+    placeholder: 'Type or tap the microphone...',
+    listening: 'Listening...',
+    tapToSpeak: 'Tap and speak',
+    tapToStop: 'Turn off the microphone',
+    empty: 'Your order is empty', emptyHint: 'Say the name of a dish or pick it from the menu',
+    total: 'Total', confirm: 'Confirm', clear: 'Clear', newOrder: 'New order',
+    choose: 'choose', needDrink: 'choose a drink',
+    statusOpen: 'In progress', statusConfirmed: 'Confirmed', statusCancelled: 'Cancelled',
+    pending: 'Waiting for your choice',
+    examples: 'Try',
+    quick: 'Reply',
+    waiting: 'waiting',
+    noActivity: 'No activity yet',
+    noTurns: 'Send the first phrase',
+    colName: 'Dish', colCat: 'Category', colStatus: 'Status', colSizes: 'Sizes', colPrice: 'Price',
+    inStock: 'In stock', outStock: 'Out', add: 'Add',
+    from: 'from', ago: 'ago', now: 'now', sec: 's', min: 'min',
+    connected: 'Backend connected', mockMode: 'Mock mode',
+    navKiosk: 'Menu', all: 'All', thinking: 'One moment...',
+    voiceHint: 'Tap the microphone and say your order, or pick from the menu',
+    myOrder: 'My order', currentOrder: 'Current order', kiosk: 'Kiosk',
+    takeAway: 'Take away', dineIn: 'Eat in', orderNo: 'Order number',
+    items: 'Items', waitChoice: 'Waiting for choice',
+    kClarifs: 'Clarifications', kManual: 'Manual actions', voiceCmds: 'voice and text commands',
+    ofTurns: 'of turns', manualVia: (m) => (m === 'actions' ? 'via /actions' : 'via text'),
+    lastJson: 'Last backend response (actions)',
+    liveOn: 'Listening', listeningHint: 'Browse the menu and say what to add. Tap the microphone again to turn it off.',
+    idleTitle: 'Order with your voice', idleSub: 'Say what you want, for example "two cheeseburgers and a Coca-Cola", or pick from the menu',
+    idleVoice: 'Tap and speak', idleTap: 'Touch the screen to pick from the menu',
+    autoReset: (s) => `New order in ${s} s`,
+    metricsHint: 'counted for the whole kiosk session', ordersDone: 'orders confirmed',
+    resetMetrics: 'Reset', runDemo: '▶ Run demo dialog', demoRunning: 'Demo running...',
+    error: 'Error', menuError: 'Could not load the menu', noBackend: 'No connection, please try again later',
   },
 }
+
+// short для шапки, long для заставки
+export const LANGS = [
+  { id: 'ru', short: 'RU', long: 'Русский' },
+  { id: 'kz', short: 'KZ', long: 'Қазақша' },
+  { id: 'en', short: 'EN', long: 'English' },
+]
 
 const EX_MOCK = {
   ru: ['Два комбо классик', 'Колу', 'Второе убери', 'Колу сделай большой', 'Чизбургер без лука', 'Подтверждаю'],
   kz: ['Екі чизбургер пиязсыз', 'Үлкен кола', 'Екіншісін алып таста', 'Растаймын'],
+  en: ['Cheeseburger', 'Cola', 'Fries', 'Latte', 'Sprite'],
 }
-// фразы под меню Python-бэка (voice_cart_nlu/data/menu.json)
+// фразы под меню python-бэка, на en nlu понимает только названия блюд
 const EX_API = {
-  ru: ['Два бургера и колу', 'Колу сделай большой', 'Комбо', 'Спрайт и фри', 'Большое', 'Без лука', 'Убери второе', 'Подтверждаю'],
-  kz: ['Екі бургер және кола', 'Үлкен қыл', 'Пиязсыз', 'Растаймын'],
+  ru: ['Два чизбургера и колу', 'Колу сделай большой', 'Комбо наггетс', 'Спрайт', 'Фри', 'Без лука', 'Убери второе', 'Подтверждаю'],
+  kz: ['Екі чизбургер және кола', 'Үлкен қыл', 'Пиязсыз', 'Растаймын'],
+  en: ['Cheeseburger', 'Cola', 'Fries', 'Latte', 'Sprite'],
 }
 export const EXAMPLES = MODE === 'mock' ? EX_MOCK : EX_API
 

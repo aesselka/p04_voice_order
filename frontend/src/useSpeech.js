@@ -5,7 +5,14 @@ import { STT_MODE } from './api.js'
 //   слушает, пока не нажмут снова; каждая законченная фраза -> onFinal(text);
 //   Chrome сам гасит распознавание после тишины - перезапускаем.
 // server: запись MediaRecorder одной фразой -> onAudio(blob), бэк сам распознаёт.
+const ERRORS = {
+  ru: { denied: 'Нет доступа к микрофону', mic: 'Микрофон', unsupported: 'Браузер не поддерживает распознавание речи. Откройте в Chrome.' },
+  kz: { denied: 'Микрофонға рұқсат жоқ', mic: 'Микрофон', unsupported: 'Браузер сөйлеуді танымайды. Chrome-да ашыңыз.' },
+  en: { denied: 'No access to the microphone', mic: 'Microphone', unsupported: 'This browser does not support speech recognition. Please open it in Chrome.' },
+}
+
 export function useSpeech({ lang, onFinal, onAudio }) {
+  const err = ERRORS[lang] || ERRORS.ru
   const [listening, setListening] = useState(false)
   const [interim, setInterim] = useState('')
   const [error, setError] = useState('')
@@ -27,7 +34,7 @@ export function useSpeech({ lang, onFinal, onAudio }) {
 
   function startBrowser() {
     const rec = new SR()
-    rec.lang = lang === 'kz' ? 'kk-KZ' : 'ru-RU'
+    rec.lang = { kz: 'kk-KZ', en: 'en-US' }[lang] || 'ru-RU'
     rec.interimResults = true
     rec.continuous = true
     rec.onresult = (e) => {
@@ -43,8 +50,8 @@ export function useSpeech({ lang, onFinal, onAudio }) {
     rec.onerror = (e) => {
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
         live.current = false
-        setError('Нет доступа к микрофону')
-      } else if (e.error !== 'no-speech' && e.error !== 'aborted') setError('Микрофон: ' + e.error)
+        setError(err.denied)
+      } else if (e.error !== 'no-speech' && e.error !== 'aborted') setError(err.mic + ': ' + e.error)
     }
     rec.onend = () => {
       setInterim('')
@@ -75,11 +82,11 @@ export function useSpeech({ lang, onFinal, onAudio }) {
         recRef.current = rec
         setListening(true)
       } catch {
-        setError('Нет доступа к микрофону')
+        setError(err.denied)
       }
       return
     }
-    if (!SR) { setError('Браузер не поддерживает распознавание речи. Откройте в Chrome.'); return }
+    if (!SR) { setError(err.unsupported); return }
     live.current = true
     setListening(true)
     startBrowser()

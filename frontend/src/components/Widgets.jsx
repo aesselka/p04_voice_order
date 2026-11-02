@@ -96,10 +96,10 @@ export function ActivityFeed({ items, ui }) {
 
 export function MenuTable({ menu, lang, ui, query, busy, onPick }) {
   if (!menu) return null
-  const nk = lang === 'kz' ? 'name_kz' : 'name_ru'
+  const nameOf = (i) => i[`name_${lang}`] || i.name_ru
   const catName = Object.fromEntries(menu.categories.map((c) => [c.id, c[lang]]))
   const q = query.trim().toLowerCase()
-  const items = menu.items.filter((i) => !q || i[nk].toLowerCase().includes(q) || (catName[i.category] || '').toLowerCase().includes(q))
+  const items = menu.items.filter((i) => !q || nameOf(i).toLowerCase().includes(q) || (catName[i.category] || '').toLowerCase().includes(q))
   return (
     <div className="table-wrap">
       <table className="table">
@@ -122,7 +122,7 @@ export function MenuTable({ menu, lang, ui, query, busy, onPick }) {
                   <div className="cell-item">
                     <span className="round sm"><Icon size={14} /></span>
                     <div>
-                      <b>{i[nk]}</b>
+                      <b>{nameOf(i)}</b>
                       <small>{i.desc ? i.desc[lang] : catName[i.category]}</small>
                     </div>
                   </div>
@@ -131,7 +131,7 @@ export function MenuTable({ menu, lang, ui, query, busy, onPick }) {
                 <td className="hide-sm muted">{i.sizes ? Object.keys(i.sizes).join(' / ') : '-'}</td>
                 <td className="num">{price}</td>
                 <td className="num">
-                  <button className="pill sm" disabled={!i.available || busy} onClick={() => onPick(i[nk])}>{ui.add}</button>
+                  <button className="pill sm" disabled={!i.available || busy} onClick={() => onPick(i.name_ru)}>{ui.add}</button>
                 </td>
               </tr>
             )

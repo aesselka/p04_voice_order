@@ -88,7 +88,7 @@ def classify(words: list[str], idx: MenuIndex) -> list[Tok]:
         elif w in L.STOP:
             toks.append(Tok(w, "stop"))
         else:
-            s = idx.item_stem(w)
+            s = None if idx.is_exact_modifier(w) else idx.item_stem(w)
             if s:
                 toks.append(Tok(w, "item", s))
                 continue

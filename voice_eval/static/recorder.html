@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Eval Studio</title>
+<style>
+  :root { --bg:#0f1115; --card:#171a21; --line:#262b36; --text:#e8eaf0; --dim:#8b93a7; --acc:#4f8cff; --rec:#ff4d5e; --ok:#3ecf8e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:20px; }
+  h1 { font-size:18px; margin:0 auto 0 0; font-weight:600; }
+  input, select { background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font:inherit; }
+  .bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin-bottom:20px; }
+  .bar > div { height:100%; background:var(--ok); width:0; transition:width .3s; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px; }
+  .meta { display:flex; gap:8px; color:var(--dim); font-size:13px; margin-bottom:14px; flex-wrap:wrap; }
+  .tag { border:1px solid var(--line); border-radius:999px; padding:1px 9px; }
+  .tag.kk { color:#ffcf5a; border-color:#5a4a1e; } .tag.mixed { color:#c49bff; border-color:#43305e; }
+  .tag.done { color:var(--ok); border-color:#1f5a41; }
+  .ctx { color:var(--dim); font-size:15px; margin-bottom:6px; }
+  .ctx div::before { content:"гость: "; opacity:.6; }
+  .phrase { font-size:34px; line-height:1.25; font-weight:600; margin:10px 0 24px; overflow-wrap:anywhere; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  button { background:var(--line); color:var(--text); border:0; border-radius:10px; padding:10px 16px; font:inherit; cursor:pointer; }
+  button:hover { filter:brightness(1.2); } button:disabled { opacity:.4; cursor:default; }
+  #recBtn { background:var(--acc); min-width:170px; font-weight:600; }
+  #recBtn.on { background:var(--rec); animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity:.75; } }
+  .meter { flex:1; min-width:80px; height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .meter > div { height:100%; width:0; background:var(--ok); }
+  .help { color:var(--dim); font-size:13px; margin-top:18px; }
+  kbd { background:var(--line); border-radius:4px; padding:0 6px; font-size:12px; }
+  .status { min-height:22px; margin-top:12px; font-size:14px; color:var(--dim); }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --text:#14171f; --dim:#646c7e; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🎙 Voice Eval Studio</h1>
+    <label>Кто читает <input id="speaker" size="12" placeholder="nurasyl"></label>
+    <select id="filter">
+      <option value="all">все реплики</option>
+      <option value="todo">только незаписанные</option>
+      <option value="ru">ru</option><option value="kk">kk</option><option value="mixed">mixed</option>
+    </select>
+  </header>
+  <div class="bar"><div id="progress"></div></div>
+  <div class="card">
+    <div class="meta" id="meta"></div>
+    <div class="ctx" id="ctx"></div>
+    <div class="phrase" id="phrase">Загрузка…</div>
+    <div class="row">
+      <button id="prevBtn">←</button>
+      <button id="recBtn">● Записать</button>
+      <button id="playBtn" disabled>▶ Прослушать</button>
+      <button id="nextBtn">→</button>
+      <div class="meter"><div id="level"></div></div>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+  <p class="help">
+    <kbd>Пробел</kbd> старт/стоп (сохраняется сразу и переходит дальше) · <kbd>←</kbd> <kbd>→</kbd> листать ·
+    <kbd>P</kbd> прослушать · перезапись — просто запиши ещё раз.<br>
+    Говори естественно, как у кассы: можно с «эээ», не по бумажке. Тихая комната не обязательна — шум тоже полезен для теста.
+  </p>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let all = [], view = [], i = 0, rec = null, chunks = [], stream = null, analyser = null;
+
+const store = { get: (k) => { try { return localStorage.getItem(k) } catch { return null } },
+                set: (k, v) => { try { localStorage.setItem(k, v) } catch {} } };
+$("speaker").value = store.get("speaker") || "";
+$("filter").value = store.get("filter") || "all";
+
+const speaker = () => ($("speaker").value.trim() || "anon").replace(/[^\w-]/g, "_");
+
+async function load() {
+  const r = await fetch(`/api/prompts?speaker=${encodeURIComponent(speaker())}`);
+  all = await r.json();
+  applyFilter(true);
+}
+
+function applyFilter(keepPos) {
+  const f = $("filter").value;
+  const cur = view[i];
+  view = all.filter(p => f === "all" || (f === "todo" ? !p.recorded : p.lang === f));
+  i = keepPos && cur ? Math.max(0, view.findIndex(p => p.dialog_id === cur.dialog_id && p.turn === cur.turn)) : 0;
+  if (i < 0) i = 0;
+  render();
+}
+
+function render() {
+  const done = all.filter(p => p.recorded).length;
+  $("progress").style.width = `${all.length ? 100 * done / all.length : 0}%`;
+  const p = view[i];
+  if (!p) { $("phrase").textContent = "Всё записано 🎉"; $("meta").innerHTML = ""; $("ctx").innerHTML = ""; return; }
+  $("meta").innerHTML = `<span>${i + 1} / ${view.length}</span><span class="tag">${p.dialog_id}</span>
+    <span class="tag">реплика ${p.turn + 1} из ${p.n_turns}</span><span class="tag ${p.lang}">${p.lang}</span>
+    ${p.recorded ? '<span class="tag done">✓ записано</span>' : ""}<span>всего записано ${done}/${all.length}</span>`;
+  $("ctx").innerHTML = all.filter(q => q.dialog_id === p.dialog_id && q.turn < p.turn)
+    .map(q => `<div>${escapeHtml(q.text)}</div>`).join("");
+  $("phrase").textContent = p.text;
+  $("playBtn").disabled = !p.recorded;
+}
+
+const escapeHtml = (s) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function ensureMic() {
+  if (stream) return;
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false } });
+  const ctx = new AudioContext(), src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser(); analyser.fftSize = 512; src.connect(analyser);
+  const buf = new Uint8Array(analyser.fftSize);
+  (function tick() {
+    analyser.getByteTimeDomainData(buf);
+    let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v - 128));
+    $("level").style.width = `${Math.min(100, peak / 1.28)}%`;
+    requestAnimationFrame(tick);
+  })();
+}
+
+async function toggle() {
+  if (!view[i]) return;
+  if (rec && rec.state === "recording") { rec.stop(); return; }
+  try { await ensureMic(); } catch (e) { $("status").textContent = "Нет доступа к микрофону: " + e.message; return; }
+  const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+  rec = new MediaRecorder(stream, { mimeType: mime }); chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  rec.onstop = () => save(new Blob(chunks, { type: mime }), view[i]);
+  rec.start();
+  $("recBtn").classList.add("on"); $("recBtn").textContent = "■ Стоп (пробел)";
+  $("status").textContent = "Идёт запись…";
+}
+
+async function save(blob, p) {
+  $("recBtn").classList.remove("on"); $("recBtn").textContent = "● Записать";
+  if (blob.size < 2000) { $("status").textContent = "Слишком короткая запись — попробуй ещё раз."; return; }
+  const fd = new FormData(); fd.append("audio", blob, "a.webm");
+  const r = await fetch(`/api/record/${speaker()}/${p.dialog_id}/${p.turn}`, { method: "POST", body: fd });
+  if (!r.ok) { $("status").textContent = "Не сохранилось: " + r.status; return; }
+  p.recorded = true;
+  $("status").textContent = `✓ Сохранено: ${p.dialog_id}, реплика ${p.turn + 1}`;
+  if (i < view.length - 1) i++;
+  render();
+}
+
+function play() {
+  const p = view[i]; if (!p || !p.recorded) return;
+  new Audio(`/api/audio/${speaker()}/${p.dialog_id}/${p.turn}?t=${Date.now()}`).play();
+}
+
+$("recBtn").onclick = toggle;
+$("playBtn").onclick = play;
+$("prevBtn").onclick = () => { if (i > 0) { i--; render(); } };
+$("nextBtn").onclick = () => { if (i < view.length - 1) { i++; render(); } };
+$("speaker").onchange = () => { store.set("speaker", $("speaker").value); load(); };
+$("filter").onchange = () => { store.set("filter", $("filter").value); applyFilter(false); };
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.code === "Space") { e.preventDefault(); toggle(); }
+  else if (e.key === "ArrowRight") $("nextBtn").click();
+  else if (e.key === "ArrowLeft") $("prevBtn").click();
+  else if (e.key.toLowerCase() === "p" || e.key.toLowerCase() === "з") play();
+});
+load();
+</script>
+</body>
+</html>
