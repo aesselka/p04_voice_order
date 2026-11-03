@@ -8,7 +8,7 @@ const BY_ID = {
   twister: '🌯', spicy_twister: '🌶️', onion_rings: '🧅', cheese_sticks: '🧀',
   ice_tea: '🧋', americano: '☕', cherry_pie: '🥧',
 }
-const BY_CAT = { combo: '🍱', burger: '🍔', twister: '🌯', side: '🍟', drink: '🥤', dessert: '🍦' }
+const BY_CAT = { sauce: '🥫', combo: '🍱', burger: '🍔', twister: '🌯', side: '🍟', drink: '🥤', dessert: '🍦' }
 
 export const emojiFor = (id, cat) => BY_ID[id] || BY_CAT[cat] || '🍽️'
 export const catEmoji = (cat) => BY_CAT[cat] || '🍽️'
@@ -26,9 +26,18 @@ export const tintFor = (cat) => {
 // Фото с Pexels (бесплатная лицензия, указание автора не обязательно): https://www.pexels.com/license/
 const PX = (id, w = 600) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`
 const PHOTO = {
-  burger: 5374420, chicken_burger: 8130750, combo: 20003199, fries: 5779487, nuggets: 11710530, salad: 842545,
-  cola: 15205136, sprite: 9996446, fanta: 7630062, water: 34199673, juice_apple: 5817625, juice_orange: 4958852,
-  latte: 459489, coffee: 1235706, tea: 34835064, ice_cream: 16962446,
+  // меню I'M из voice_cart_nlu/data/menu.json
+  cheeseburger: 4749403, hamburger: 34407507, chickenburger: 8130750, double_cheeseburger: 33502810,
+  big_burger: 5374420, beef_tasty: 15010285, chicken_classic: 9207184,
+  combo_big_burger: 20003199, combo_double_cheeseburger: 36007382, combo_chicken_classic: 34407059, combo_nuggets: 10183543,
+  fries: 5779487, potato_wedges: 34722097, nuggets: 11710530, strips: 14950910,
+  ketchup: 32972548, cheese_sauce: 5855238, bbq_sauce: 13828923,
+  coca_cola: 15205136, sprite: 9996446, fanta: 7630062, water: 34199673, juice_orange: 4958852,
+  milkshake: 18142623, americano: 1235706, latte: 459489, tea: 34835064,
+  cinnabon: 14448820, ice_cream: 16962446, cherry_pie: 35672929,
+  // старые id (mock-меню и прошлое меню бэка)
+  burger: 5374420, chicken_burger: 8130750, combo: 20003199, salad: 842545, cola: 15205136,
+  juice_apple: 5817625, coffee: 1235706,
 }
 // позиции mock-меню берут фото похожего блюда
 const ALIAS = {
@@ -39,4 +48,10 @@ const ALIAS = {
 export const photoFor = (id, w) => {
   const p = PHOTO[id] || PHOTO[ALIAS[id]]
   return p ? PX(p, w) : null
+}
+
+// фото для списка категорий (берутся у характерного блюда категории)
+export const CAT_PHOTO = {
+  all: 'combo_big_burger', combo: 'combo_big_burger', burger: 'cheeseburger', twister: 'chicken_burger',
+  side: 'fries', sauce: 'ketchup', drink: 'coca_cola', dessert: 'ice_cream',
 }

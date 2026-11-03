@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getMenu, sendMessage, sendVoice, sendActions, resetSession, actionsMode, MODE, STT_MODE } from './api.js'
 import { useSpeech } from './useSpeech.js'
 import { LANGS, UI } from './i18n.js'
-import { catEmoji } from './kioskData.js'
+import CatIcon from './components/CatIcons.jsx'
 import ProductCard from './components/ProductCard.jsx'
 import OrderPanel from './components/OrderPanel.jsx'
 import MetricsView from './components/MetricsView.jsx'
@@ -80,7 +80,7 @@ export default function App() {
       clearTimeout(flashTimer.current)
       flashTimer.current = setTimeout(() => setFlash([]), 1400)
     }
-    if (res.lang && res.lang !== lang && kind !== 'tap') setLang(res.lang)
+    if (res.lang === 'kz' && lang === 'ru' && kind !== 'tap') setLang('kz')
   }
   const fail = (e) => setLast({ reply: e.noBackend ? ui.noBackend : `${ui.error}: ${e.message}` })
 
@@ -215,78 +215,81 @@ export default function App() {
     return menu.items.filter((i) => (cat === 'all' || i.category === cat) && (!q || nameOf(i).toLowerCase().includes(q)))
   }, [menu, cat, query, lang])
 
+  const catTitle = cat === 'all' ? ui.allProducts : menu?.categories.find((c) => c.id === cat)?.[lang]
+
   return (
     <div className="kshell">
-      <aside className="kside">
+      <header className="khead">
         <div className="klogo">
           <span className="logo-mark"><span /></span>
-          <b>VOICE<br />ORDER</b>
+          <b>Voice Order</b>
         </div>
         <nav className="knav">
           <button className={view === 'kiosk' ? 'on' : ''} onClick={() => setView('kiosk')}>
-            <span><IcMenu size={18} /></span>{ui.navKiosk}
+            <IcMenu size={17} />{ui.navKiosk}
           </button>
           <button className={view === 'metrics' ? 'on' : ''} onClick={() => setView('metrics')}>
-            <span><IcChart size={18} /></span>{ui.navMetrics}
+            <IcChart size={17} />{ui.navMetrics}
           </button>
         </nav>
-        <div className="kstatus" title={`STT: ${STT_MODE}`}>
-          <span className={'dot ' + (MODE === 'mock' ? 'warn' : 'ok')} />
-          <small>{MODE === 'mock' ? 'mock' : 'API'}</small>
+        <label className="ksearch">
+          <IcSearch size={18} />
+          <input value={query} onChange={(e) => { setQuery(e.target.value); setView('kiosk') }} placeholder={ui.search} />
+        </label>
+        <div className="seg">
+          {LANGS.map((l) => (
+            <button key={l.id} className={lang === l.id ? 'on' : ''} onClick={() => setLang(l.id)}>{l.short}</button>
+          ))}
         </div>
-      </aside>
+        <span className="kstatus" title={`STT: ${STT_MODE}`}>
+          <span className={'dot ' + (MODE === 'mock' ? 'warn' : 'ok')} />{MODE === 'mock' ? 'mock' : 'API'}
+        </span>
+        <button className="btn-yellow head-btn" onClick={newOrder}><IcRefresh size={17} />{ui.newOrder}</button>
+      </header>
 
-      <main className="kmain">
-        <header className="ktop">
-          <label className="ksearch">
-            <IcSearch size={17} />
-            <input value={query} onChange={(e) => { setQuery(e.target.value); setView('kiosk') }} placeholder={ui.search} />
-          </label>
-          <div className="seg">
-            {LANGS.map((l) => (
-              <button key={l.id} className={lang === l.id ? 'on' : ''} onClick={() => setLang(l.id)}>{l.short}</button>
-            ))}
-          </div>
-          <button className="kicon" title={ui.newOrder} onClick={newOrder}><IcRefresh size={18} /></button>
-        </header>
-
-        {view === 'kiosk' ? (
-          <>
-            <div className="cats">
-              <button className={'cat' + (cat === 'all' ? ' on' : '')} onClick={() => setCat('all')}>
-                <span className="cat-ic">🍽️</span>{ui.all}
-              </button>
-              {menu?.categories.map((c) => (
-                <button key={c.id} className={'cat' + (cat === c.id ? ' on' : '')} onClick={() => setCat(c.id)}>
-                  <span className="cat-ic">{catEmoji(c.id)}</span>{c[lang]}
+      <div className="kbody">
+        <main className="kmain">
+          {view === 'kiosk' ? (
+            <div className="kmenu">
+              <div className="kmenu-side">
+                <h1 className="ktitle">{catTitle}</h1>
+                <button className={'cat-all' + (cat === 'all' ? ' on' : '')} onClick={() => setCat('all')}>
+                  <span className="cat-ic"><CatIcon id="all" /></span>{ui.allProducts}
                 </button>
-              ))}
+                <div className="cats">
+                  {menu?.categories.map((c) => (
+                    <button key={c.id} className={'cat' + (cat === c.id ? ' on' : '')} onClick={() => setCat(c.id)}>
+                      <span className="cat-ic"><CatIcon id={c.id} /></span>{c[lang]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid">
+                {items.map((i) => (
+                  <ProductCard key={i.id} item={i} lang={lang} ui={ui} inCart={inCart[i.id] || 0}
+                    flash={flash.includes(i.id)} busy={cart.status === 'confirmed'} onAdd={addItem} />
+                ))}
+              </div>
             </div>
-            <div className="grid">
-              {items.map((i) => (
-                <ProductCard key={i.id} item={i} lang={lang} ui={ui} inCart={inCart[i.id] || 0}
-                  flash={flash.includes(i.id)} busy={cart.status === 'confirmed'} onAdd={addItem} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <MetricsView ui={ui} stats={stats} turns={turns} activity={activity} messages={messages} actionsMode={actionsMode()}
-            demo={demo} busy={busy} onDemo={runDemo} onReset={resetMetrics} />
-        )}
-      </main>
+          ) : (
+            <MetricsView ui={ui} stats={stats} turns={turns} activity={activity} messages={messages} actionsMode={actionsMode()}
+              demo={demo} busy={busy} onDemo={runDemo} onReset={resetMetrics} />
+          )}
+        </main>
+
+        <OrderPanel
+          ui={ui} lang={lang} cart={cart} pending={pending} quick={quick} busy={busy} speech={speech}
+          last={last} orderNo={orderNo} mode={mode} setMode={setMode}
+          onSend={(t) => send(t)} onQuick={onQuick} onPlus={plus} onMinus={minus} onRemove={remove}
+          onConfirm={confirm} onClear={clear} onNew={newOrder} open={sheet} setOpen={setSheet} resetIn={resetIn}
+        />
+      </div>
 
       {idle && !demo && (
         <IdleScreen ui={ui} lang={lang} setLang={setLang} canVoice={speech.supported}
           onStart={() => { lastTouch.current = Date.now(); setIdle(false) }}
           onVoice={() => { lastTouch.current = Date.now(); setIdle(false); if (!speech.listening) speech.start() }} />
       )}
-
-      <OrderPanel
-        ui={ui} lang={lang} cart={cart} pending={pending} quick={quick} busy={busy} speech={speech}
-        last={last} orderNo={orderNo} mode={mode} setMode={setMode}
-        onSend={(t) => send(t)} onQuick={onQuick} onPlus={plus} onMinus={minus} onRemove={remove}
-        onConfirm={confirm} onClear={clear} onNew={newOrder} open={sheet} setOpen={setSheet} resetIn={resetIn}
-      />
     </div>
   )
 }

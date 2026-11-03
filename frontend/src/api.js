@@ -182,9 +182,8 @@ const REPLY = {
 }
 
 function adaptStep(r, uiLang, stats, manual = false) {
-  // тапы - язык интерфейса; голос/текст - язык фразы (киоск переключится на него сам)
-  // en не переключаем на язык фразы
-  const lang = manual || uiLang === 'en' ? uiLang : r.lang === 'kk' ? 'kz' : r.lang === 'ru' ? 'ru' : uiLang
+  // язык выбирает гость (RU/KZ/EN); явно казахская фраза может включить KZ, обратно в RU сам не уходит
+  const lang = !manual && uiLang === 'ru' && r.lang === 'kk' ? 'kz' : uiLang
   const say = REPLY[lang] || REPLY.ru
   const tr = (text) => (lang === 'en' ? toEnglish(text) : text)
   const cart = adaptCart(r.cart, lang)

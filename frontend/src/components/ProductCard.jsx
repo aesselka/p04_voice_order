@@ -29,9 +29,9 @@ export default function ProductCard({ item, lang, ui, inCart, flash, busy, onAdd
           </div>
         )}
         <div className="pcard-foot">
-          <b>{fmt(price)}</b>
-          <button className="add-btn" disabled={!item.available || busy} onClick={() => onAdd(item, size)} aria-label={ui.add}>
-            <IcCart size={17} />
+          <b className="pcard-price">{fmt(price)}</b>
+          <button className="add-btn" disabled={!item.available || busy} onClick={() => onAdd(item, size)}>
+            <IcCart size={16} /> {ui.add}
           </button>
         </div>
       </div>
