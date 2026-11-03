@@ -2,6 +2,15 @@
 const S = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' }
 
 const ICONS = {
+  // корзина (пустой заказ)
+  cart: (
+    <>
+      <path d="M5 9h5l4 20h22l4-14H13" />
+      <path d="M15 34h21" />
+      <circle cx="17" cy="39" r="2.5" />
+      <circle cx="33" cy="39" r="2.5" />
+    </>
+  ),
   // все продукты: тарелка под крышкой
   all: (
     <>

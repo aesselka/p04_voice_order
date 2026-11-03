@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { fmt } from '../i18n.js'
 import FoodImg from './FoodImg.jsx'
+import CatIcon from './CatIcons.jsx'
 import { IcMic, IcSend, IcX, IcPlus, IcMinus, IcCheck } from './Icons.jsx'
 
 // правая колонка киоска: голос + заказ + итог. На узком экране - нижняя шторка.
@@ -109,7 +110,7 @@ export default function OrderPanel({
 
           {lines.length === 0 ? (
             <div className="order-empty">
-              <span>🛒</span>
+              <span className="empty-ic"><CatIcon id="cart" size={34} /></span>
               <b>{ui.empty}</b>
               <small>{ui.emptyHint}</small>
             </div>
